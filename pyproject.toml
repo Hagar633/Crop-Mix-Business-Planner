@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crop-mix-business-planner"
+version = "0.1.0"
+description = "Crop Mix Optimization System for Agricultural Farm Twin"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pyomo>=6.7.0",
+    "highspy>=1.7.0",
+    "pandas>=2.0.0",
+    "fastapi>=0.110.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
