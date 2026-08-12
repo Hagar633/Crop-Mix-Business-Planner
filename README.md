@@ -2,11 +2,12 @@
 
 A crop-mix optimization solver that recommends how to allocate farm land among different crops while maximizing expected profit.
 
-The project uses **Python, Pyomo, and the HiGHS solver**.
+Built using **Python, Pyomo, and HiGHS**.
 
-## Current Version
+## Versions
 
 ### V1 — Basic Optimization
+
 Considers:
 - Land availability
 - Water budget
@@ -15,6 +16,7 @@ Considers:
 - Production cost
 
 ### V2 — Labor & Fertilizer
+
 Adds:
 - Labor requirements and costs
 - Fertilizer requirements and costs
@@ -22,6 +24,7 @@ Adds:
 - Fertilizer budget
 
 ### V3 — Field & Soil Suitability
+
 Adds:
 - Multiple fields
 - Field-level crop allocation
@@ -29,75 +32,48 @@ Adds:
 - Soil EC
 - Soil texture
 - Crop soil requirements
-- Field × crop suitability
 
-The optimizer prevents crops from being allocated to fields where they are unsuitable.
+The system checks whether each crop is suitable for each field and prevents unsuitable crops from being allocated.
 
 ## Optimization
 
 The model maximizes:
 
-Expected Net Profit
+**Expected Net Profit**
 
 subject to:
 
-Land availability
-Water availability
-Labor availability
-Fertilizer availability
-Soil suitability
+- Land availability
+- Water availability
+- Labor availability
+- Fertilizer availability
+- Soil suitability
 
-The current model is a continuous Linear Programming (LP) model solved using Pyomo + HiGHS.
+The current model is a **continuous Linear Programming (LP)** model solved using **Pyomo + HiGHS**.
 
-Project Structure
-src/crop_mix/
-├── data/
-│   └── example_data.py
-└── models/
-    ├── optimizer_v1.py
-    ├── optimizer_v2.py
-    ├── optimizer_v3.py
-    └── soil_suitability.py
+## Project Structure
 
-tests/
-├── test_optimizer_v1.py
-├── test_optimizer_v2.py
-├── test_optimizer_v3.py
-└── test_soil_suitability.py
-
-run_demo.py
-Run
-
-Install dependencies:
-
-pip install -r requirements.txt
-
-Run tests:
-
-.venv\Scripts\python.exe -m pytest tests/
-
-Run the demo:
-
-.venv\Scripts\python.exe run_demo.py
-Current Status
-V1 ✅
-V2 ✅
-V3 ✅
-
-The current soil and crop requirement values are synthetic test/demo data.
-
-Future Work
-
-Planned additions include:
-Crop rotation
-Seasonal constraints
-Real agricultural data
-Frontend
-API
-Optional LLM explanation layer
-
-Crop rotation
-Seasonal constraints
-Real agricultural data
-Frontend
-API
+```text
+Crop-Mix-Business-Planner/
+│
+├── src/
+│   └── crop_mix/
+│       ├── data/
+│       │   └── example_data.py
+│       │
+│       └── models/
+│           ├── optimizer_v1.py
+│           ├── optimizer_v2.py
+│           ├── optimizer_v3.py
+│           └── soil_suitability.py
+│
+├── tests/
+│   ├── test_optimizer_v1.py
+│   ├── test_optimizer_v2.py
+│   ├── test_optimizer_v3.py
+│   └── test_soil_suitability.py
+│
+├── run_demo.py
+├── requirements.txt
+├── pyproject.toml
+└── README.md
