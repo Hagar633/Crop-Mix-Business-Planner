@@ -1,0 +1,300 @@
+warning: in the working copy of 'run_demo.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/crop_mix/__init__.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/crop_mix/data/example_data.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/crop_mix/models/__init__.py', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/run_demo.py b/run_demo.py[m
+[1mindex f848bcb..02126f7 100644[m
+[1m--- a/run_demo.py[m
+[1m+++ b/run_demo.py[m
+[36m@@ -1,4 +1,4 @@[m
+[31m-"""Standalone execution script to run Version 1 Crop Mix Optimizer."""[m
+[32m+[m[32m"""Standalone execution script to run Version 2 Crop Mix Optimizer."""[m
+ [m
+ import sys[m
+ from pathlib import Path[m
+[36m@@ -9,46 +9,65 @@[m [mif str(src_dir) not in sys.path:[m
+     sys.path.insert(0, str(src_dir))[m
+ [m
+ from crop_mix.data.example_data import get_example_farm_data[m
+[31m-from crop_mix.models.optimizer_v1 import CropMixOptimizerV1[m
+[32m+[m[32mfrom crop_mix.models.optimizer_v2 import CropMixOptimizerV2[m
+ [m
+ [m
+ def main():[m
+[31m-    print("=" * 60)[m
+[31m-    print("      CROP MIX OPTIMIZATION SYSTEM (VERSION 1)")[m
+[31m-    print("=" * 60)[m
+[32m+[m[32m    print("=" * 75)[m
+[32m+[m[32m    print("      CROP MIX OPTIMIZATION SYSTEM (VERSION 2 - LABOR & FERTILIZER)")[m
+[32m+[m[32m    print("=" * 75)[m
+ [m
+[31m-    # 1. Load sample dataset[m
+[32m+[m[32m    # 1. Load sample dataset with synthetic labor/fertilizer test parameters[m
+     farm_inputs = get_example_farm_data()[m
+[31m-    print("\n--- FARM INPUTS ---")[m
+[31m-    print(f"Total Field Area Available: {farm_inputs.field_area:,.2f} hectares")[m
+[31m-    print(f"Total Water Budget Available: {farm_inputs.water_budget:,.2f} m^3\n")[m
+[32m+[m[32m    print("\n--- FARM RESOURCE BUDGETS (INPUTS) ---")[m
+[32m+[m[32m    print(f"  Field Area Available     : {farm_inputs.field_area:,.2f} hectares")[m
+[32m+[m[32m    print(f"  Water Budget Available   : {farm_inputs.water_budget:,.2f} m^3")[m
+[32m+[m[32m    print(f"  Labor Budget Available   : {farm_inputs.labor_budget:,.2f} hours (TEST/DEMO VALUE)")[m
+[32m+[m[32m    print(f"  Fertilizer Budget Avail. : {farm_inputs.fertilizer_budget:,.2f} kg (TEST/DEMO VALUE)\n")[m
+ [m
+[31m-    df_crops = farm_inputs.to_dataframe()[m
+[31m-    print("Crops Dataset:")[m
+[31m-    print(df_crops.to_string())[m
+[32m+[m[32m    # 2. Display Per-Hectare Crop Financial & Requirement Parameters[m
+[32m+[m[32m    print("--- CROP PARAMETERS (PER HECTARE) ---")[m
+[32m+[m[32m    print(f"{'Crop':<10} | {'Rev ($/ha)':<11} | {'ProdCost':<9} | {'LaborCost':<9} | {'FertCost':<9} | {'NetProfit':<10}")[m
+[32m+[m[32m    print("-" * 75)[m
+[32m+[m[32m    for name, crop in farm_inputs.crops.items():[m
+[32m+[m[32m        print([m
+[32m+[m[32m            f"{name:<10} | ${crop.revenue_per_hectare:>10,.2f} | "[m
+[32m+[m[32m            f"${crop.production_cost:>8,.2f} | ${crop.labor_cost_per_hectare:>8,.2f} | "[m
+[32m+[m[32m            f"${crop.fertilizer_cost_per_hectare:>8,.2f} | ${crop.profit_per_hectare:>9,.2f}"[m
+[32m+[m[32m        )[m
+ [m
+[31m-    # 2. Run Pyomo + HiGHS optimizer[m
+[31m-    print("\n--- RUNNING OPTIMIZER (Pyomo + HiGHS) ---")[m
+[31m-    optimizer = CropMixOptimizerV1()[m
+[32m+[m[32m    # 3. Run Pyomo + HiGHS continuous LP optimizer V2[m
+[32m+[m[32m    print("\n--- RUNNING OPTIMIZER V2 (Pyomo + HiGHS Continuous LP) ---")[m
+[32m+[m[32m    optimizer = CropMixOptimizerV2()[m
+     result = optimizer.solve(farm_inputs)[m
+ [m
+[31m-    # 3. Display results[m
+[32m+[m[32m    # 4. Display Results[m
+     print("\n--- OPTIMIZATION RESULTS ---")[m
+[31m-    print(f"Solver Status       : {result.status}")[m
+[31m-    print(f"Is Feasible         : {result.is_feasible}")[m
+[31m-    print(f"Expected Net Profit : ${result.expected_profit:,.2f}")[m
+[31m-    print(f"Total Land Used     : {result.total_land_used:,.2f} / {result.field_area_limit:,.2f} ha")[m
+[31m-    print(f"Total Water Used    : {result.total_water_used:,.2f} / {result.water_budget_limit:,.2f} m^3")[m
+[32m+[m[32m    print(f"Solver Status            : {result.status}")[m
+[32m+[m[32m    print(f"Is Feasible              : {result.is_feasible}")[m
+[32m+[m[32m    print("-" * 75)[m
+[32m+[m[32m    print("FINANCIAL SUMMARY:")[m
+[32m+[m[32m    print(f"  Total Expected Revenue : ${result.total_expected_revenue:,.2f}")[m
+[32m+[m[32m    print(f"  Total Production Cost  : ${result.total_production_cost:,.2f}")[m
+[32m+[m[32m    print(f"  Total Labor Cost       : ${result.total_labor_cost:,.2f}")[m
+[32m+[m[32m    print(f"  Total Fertilizer Cost  : ${result.total_fertilizer_cost:,.2f}")[m
+[32m+[m[32m    print(f"  Total Expected Net Profit : ${result.expected_profit:,.2f}")[m
+[32m+[m
+[32m+[m[32m    print("\nRESOURCE USAGE METRICS:")[m
+[32m+[m[32m    print(f"  Land Used / Available  : {result.total_land_used:,.2f} / {result.field_area_limit:,.2f} hectares")[m
+[32m+[m[32m    print(f"  Water Used / Available : {result.total_water_used:,.2f} / {result.water_budget_limit:,.2f} m^3")[m
+[32m+[m[32m    print(f"  Labor Used / Available : {result.total_labor_used:,.2f} / {result.labor_budget_limit:,.2f} hours")[m
+[32m+[m[32m    print(f"  Fertilizer Used / Avail: {result.total_fertilizer_used:,.2f} / {result.fertilizer_budget_limit:,.2f} kg")[m
+ [m
+[31m-    print("\nOptimal Crop Allocation (hectares):")[m
+[32m+[m[32m    print("\nOPTIMAL CROP ALLOCATION (hectares):")[m
+     for crop, ha in result.crop_allocation.items():[m
+[31m-        profit_contribution = ha * farm_inputs.crops[crop].profit_per_hectare[m
+[31m-        water_consumed = ha * farm_inputs.crops[crop].water_requirement[m
+[32m+[m[32m        crop_param = farm_inputs.crops[crop][m
+[32m+[m[32m        profit_contrib = ha * crop_param.profit_per_hectare[m
+         print([m
+             f"  - {crop:<12}: {ha:>8.2f} ha  "[m
+[31m-            f"(Profit: ${profit_contribution:>10,.2f}, Water: {water_consumed:>10,.2f} m^3)"[m
+[32m+[m[32m            f"(Net Profit Contribution: ${profit_contrib:>10,.2f})"[m
+         )[m
+[31m-    print("=" * 60)[m
+[32m+[m[32m    print("=" * 75)[m
+ [m
+ [m
+ if __name__ == "__main__":[m
+[1mdiff --git a/src/crop_mix/__init__.py b/src/crop_mix/__init__.py[m
+[1mindex f5be412..bc4c0a5 100644[m
+[1m--- a/src/crop_mix/__init__.py[m
+[1m+++ b/src/crop_mix/__init__.py[m
+[36m@@ -1,11 +1,14 @@[m
+ """Crop Mix Optimization System package."""[m
+ [m
+ from crop_mix.models.optimizer_v1 import CropMixOptimizerV1, OptimizationResult[m
+[32m+[m[32mfrom crop_mix.models.optimizer_v2 import CropMixOptimizerV2, OptimizationResultV2[m
+ from crop_mix.data.example_data import FarmInputs, CropParameters, get_example_farm_data[m
+ [m
+ __all__ = [[m
+     "CropMixOptimizerV1",[m
+     "OptimizationResult",[m
+[32m+[m[32m    "CropMixOptimizerV2",[m
+[32m+[m[32m    "OptimizationResultV2",[m
+     "FarmInputs",[m
+     "CropParameters",[m
+     "get_example_farm_data",[m
+[1mdiff --git a/src/crop_mix/__pycache__/__init__.cpython-310.pyc b/src/crop_mix/__pycache__/__init__.cpython-310.pyc[m
+[1mindex ded79ef..c769a51 100644[m
+Binary files a/src/crop_mix/__pycache__/__init__.cpython-310.pyc and b/src/crop_mix/__pycache__/__init__.cpython-310.pyc differ
+[1mdiff --git a/src/crop_mix/data/__pycache__/example_data.cpython-310.pyc b/src/crop_mix/data/__pycache__/example_data.cpython-310.pyc[m
+[1mindex 582ab27..102ad21 100644[m
+Binary files a/src/crop_mix/data/__pycache__/example_data.cpython-310.pyc and b/src/crop_mix/data/__pycache__/example_data.cpython-310.pyc differ
+[1mdiff --git a/src/crop_mix/data/example_data.py b/src/crop_mix/data/example_data.py[m
+[1mindex 256aa8d..2b98835 100644[m
+[1m--- a/src/crop_mix/data/example_data.py[m
+[1m+++ b/src/crop_mix/data/example_data.py[m
+[36m@@ -1,4 +1,4 @@[m
+[31m-"""Data structures and hardcoded example dataset for Version 1 optimizer."""[m
+[32m+[m[32m"""Data structures and example dataset for Crop Mix Optimization (V1 and V2)."""[m
+ [m
+ from dataclasses import dataclass, field[m
+ from typing import Dict[m
+[36m@@ -12,13 +12,39 @@[m [mclass CropParameters:[m
+     name: str[m
+     expected_yield: float  # Metric tons per hectare[m
+     price: float  # Price per metric ton ($/ton)[m
+[31m-    production_cost: float  # Production cost per hectare ($/ha)[m
+[32m+[m[32m    production_cost: float  # Base production cost per hectare ($/ha)[m
+     water_requirement: float  # Water requirement per hectare (m^3/ha)[m
+ [m
+[32m+[m[32m    # V2 Extensions: Labor and Fertilizer[m
+[32m+[m[32m    labor_requirement: float = 0.0  # Labor required per hectare (hours/ha)[m
+[32m+[m[32m    labor_cost_per_hour: float = 0.0  # Cost per labor hour ($/hour)[m
+[32m+[m[32m    fertilizer_requirement: float = 0.0  # Fertilizer required per hectare (kg/ha)[m
+[32m+[m[32m    fertilizer_cost_per_kg: float = 0.0  # Cost per kg of fertilizer ($/kg)[m
+[32m+[m
+[32m+[m[32m    @property[m
+[32m+[m[32m    def revenue_per_hectare(self) -> float:[m
+[32m+[m[32m        """Calculate gross revenue per hectare ($/ha)."""[m
+[32m+[m[32m        return self.expected_yield * self.price[m
+[32m+[m
+[32m+[m[32m    @property[m
+[32m+[m[32m    def labor_cost_per_hectare(self) -> float:[m
+[32m+[m[32m        """Calculate labor cost per hectare ($/ha)."""[m
+[32m+[m[32m        return self.labor_requirement * self.labor_cost_per_hour[m
+[32m+[m
+[32m+[m[32m    @property[m
+[32m+[m[32m    def fertilizer_cost_per_hectare(self) -> float:[m
+[32m+[m[32m        """Calculate fertilizer cost per hectare ($/ha)."""[m
+[32m+[m[32m        return self.fertilizer_requirement * self.fertilizer_cost_per_kg[m
+[32m+[m
+     @property[m
+     def profit_per_hectare(self) -> float:[m
+[31m-        """Calculate net profit per hectare ($/ha)."""[m
+[31m-        return (self.expected_yield * self.price) - self.production_cost[m
+[32m+[m[32m        """Calculate net profit per hectare ($/ha) after production, labor, and fertilizer costs."""[m
+[32m+[m[32m        return ([m
+[32m+[m[32m            self.revenue_per_hectare[m
+[32m+[m[32m            - self.production_cost[m
+[32m+[m[32m            - self.labor_cost_per_hectare[m
+[32m+[m[32m            - self.fertilizer_cost_per_hectare[m
+[32m+[m[32m        )[m
+ [m
+ [m
+ @dataclass[m
+[36m@@ -27,6 +53,8 @@[m [mclass FarmInputs:[m
+ [m
+     field_area: float  # Total available land area (hectares)[m
+     water_budget: float  # Total available water budget (m^3)[m
+[32m+[m[32m    labor_budget: float = float("inf")  # Total available labor budget (hours)[m
+[32m+[m[32m    fertilizer_budget: float = float("inf")  # Total available fertilizer budget (kg)[m
+     crops: Dict[str, CropParameters] = field(default_factory=dict)[m
+ [m
+     def to_dataframe(self) -> pd.DataFrame:[m
+[36m@@ -38,21 +66,23 @@[m [mclass FarmInputs:[m
+                     "crop": name,[m
+                     "expected_yield": crop.expected_yield,[m
+                     "price": crop.price,[m
+[31m-                    "production_cost": crop.production_cost,[m
+[31m-                    "water_requirement": crop.water_requirement,[m
+[31m-                    "profit_per_hectare": crop.profit_per_hectare,[m
+[32m+[m[32m                    "revenue_per_ha": crop.revenue_per_hectare,[m
+[32m+[m[32m                    "production_cost_per_ha": crop.production_cost,[m
+[32m+[m[32m                    "water_req_m3_ha": crop.water_requirement,[m
+[32m+[m[32m                    "labor_req_hrs_ha": crop.labor_requirement,[m
+[32m+[m[32m                    "labor_cost_per_ha": crop.labor_cost_per_hectare,[m
+[32m+[m[32m                    "fertilizer_req_kg_ha": crop.fertilizer_requirement,[m
+[32m+[m[32m                    "fertilizer_cost_per_ha": crop.fertilizer_cost_per_hectare,[m
+[32m+[m[32m                    "net_profit_per_ha": crop.profit_per_hectare,[m
+                 }[m
+             )[m
+         return pd.DataFrame(records).set_index("crop")[m
+ [m
+ [m
+ def get_example_farm_data() -> FarmInputs:[m
+[31m-    """Return a hardcoded example dataset for testing and demonstration.[m
+[32m+[m[32m    """Return an example dataset with synthetic TEST/DEMO values for V1 & V2 optimization testing.[m
+ [m
+[31m-    Example setup:[m
+[31m-    - 100 hectares of land available.[m
+[31m-    - 400,000 m^3 of water budget available.[m
+[31m-    - Crops: Wheat, Corn, Soybeans, Tomatoes, Cotton.[m
+[32m+[m[32m    NOTE: All labor and fertilizer parameters below are synthetic TEST/DEMO values, not real agricultural data.[m
+     """[m
+     crops = {[m
+         "Wheat": CropParameters([m
+[36m@@ -61,6 +91,11 @@[m [mdef get_example_farm_data() -> FarmInputs:[m
+             price=220.0,[m
+             production_cost=600.0,[m
+             water_requirement=3500.0,[m
+[32m+[m[32m            # Synthetic TEST/DEMO values for labor and fertilizer:[m
+[32m+[m[32m            labor_requirement=15.0,  # hrs/ha[m
+[32m+[m[32m            labor_cost_per_hour=20.0,  # $/hr -> labor cost = $300/ha[m
+[32m+[m[32m            fertilizer_requirement=150.0,  # kg/ha[m
+[32m+[m[32m            fertilizer_cost_per_kg=1.50,  # $/kg -> fertilizer cost = $225/ha[m
+         ),[m
+         "Corn": CropParameters([m
+             name="Corn",[m
+[36m@@ -68,6 +103,11 @@[m [mdef get_example_farm_data() -> FarmInputs:[m
+             price=190.0,[m
+             production_cost=900.0,[m
+             water_requirement=5500.0,[m
+[32m+[m[32m            # Synthetic TEST/DEMO values:[m
+[32m+[m[32m            labor_requirement=25.0,  # hrs/ha -> labor cost = $500/ha[m
+[32m+[m[32m            labor_cost_per_hour=20.0,[m
+[32m+[m[32m            fertilizer_requirement=200.0,  # kg/ha -> fertilizer cost = $300/ha[m
+[32m+[m[32m            fertilizer_cost_per_kg=1.50,[m
+         ),[m
+         "Soybeans": CropParameters([m
+             name="Soybeans",[m
+[36m@@ -75,6 +115,11 @@[m [mdef get_example_farm_data() -> FarmInputs:[m
+             price=450.0,[m
+             production_cost=650.0,[m
+             water_requirement=4000.0,[m
+[32m+[m[32m            # Synthetic TEST/DEMO values:[m
+[32m+[m[32m            labor_requirement=18.0,  # hrs/ha -> labor cost = $360/ha[m
+[32m+[m[32m            labor_cost_per_hour=20.0,[m
+[32m+[m[32m            fertilizer_requirement=50.0,  # kg/ha -> fertilizer cost = $75/ha[m
+[32m+[m[32m            fertilizer_cost_per_kg=1.50,[m
+         ),[m
+         "Tomatoes": CropParameters([m
+             name="Tomatoes",[m
+[36m@@ -82,6 +127,11 @@[m [mdef get_example_farm_data() -> FarmInputs:[m
+             price=120.0,[m
+             production_cost=2500.0,[m
+             water_requirement=6500.0,[m
+[32m+[m[32m            # Synthetic TEST/DEMO values:[m
+[32m+[m[32m            labor_requirement=120.0,  # hrs/ha -> labor cost = $2400/ha[m
+[32m+[m[32m            labor_cost_per_hour=20.0,[m
+[32m+[m[32m            fertilizer_requirement=250.0,  # kg/ha -> fertilizer cost = $375/ha[m
+[32m+[m[32m            fertilizer_cost_per_kg=1.50,[m
+         ),[m
+         "Cotton": CropParameters([m
+             name="Cotton",[m
+[36m@@ -89,11 +139,18 @@[m [mdef get_example_farm_data() -> FarmInputs:[m
+             price=1100.0,[m
+             production_cost=1200.0,[m
+             water_requirement=5000.0,[m
+[32m+[m[32m            # Synthetic TEST/DEMO values:[m
+[32m+[m[32m            labor_requirement=30.0,  # hrs/ha -> labor cost = $600/ha[m
+[32m+[m[32m            labor_cost_per_hour=20.0,[m
+[32m+[m[32m            fertilizer_requirement=180.0,  # kg/ha -> fertilizer cost = $270/ha[m
+[32m+[m[32m            fertilizer_cost_per_kg=1.50,[m
+         ),[m
+     }[m
+ [m
+     return FarmInputs([m
+[31m-        field_area=100.0,[m
+[31m-        water_budget=400000.0,[m
+[32m+[m[32m        field_area=100.0,  # hectares[m
+[32m+[m[32m        water_budget=400000.0,  # m^3[m
+[32m+[m[32m        labor_budget=2500.0,  # Synthetic TEST/DEMO hours budget[m
+[32m+[m[32m        fertilizer_budget=15000.0,  # Synthetic TEST/DEMO kg budget[m
+         crops=crops,[m
+     )[m
+[1mdiff --git a/src/crop_mix/models/__init__.py b/src/crop_mix/models/__init__.py[m
+[1mindex d8add9a..bdad6d5 100644[m
+[1m--- a/src/crop_mix/models/__init__.py[m
+[1m+++ b/src/crop_mix/models/__init__.py[m
+[36m@@ -1,5 +1,11 @@[m
+[31m-"""Optimizer model implementations."""[m
+[32m+[m[32m"""Optimiz
