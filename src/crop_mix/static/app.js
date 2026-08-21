@@ -8,6 +8,7 @@ const state = {
   fields: [],
   crops: [],
   ecocropSpecies: [],
+  rotationCrops: [],
   lastResult: null,
 };
 
@@ -16,6 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initEventListeners();
   loadPresetData();
   fetchEcoCropSpecies();
+  fetchRotationCrops();
 });
 
 function initEventListeners() {
@@ -86,6 +88,34 @@ async function fetchEcoCropSpecies() {
   } catch (err) {
     console.error("Failed to load EcoCrop species list:", err);
   }
+}
+
+async function fetchRotationCrops() {
+  try {
+    const res = await fetch("/api/rotation/matrix");
+    if (!res.ok) return;
+    const data = await res.json();
+    state.rotationCrops = data.crops || [];
+  } catch (err) {
+    console.error("Failed to load rotation matrix crops:", err);
+  }
+}
+
+function populatePreviousCropDropdown(selectedVal = "") {
+  const select = document.getElementById("m-field-prev-crop");
+  if (!select) return;
+
+  let html = '<option value="">None (Fallow / New Field)</option>';
+  state.rotationCrops.forEach((c) => {
+    const sel = c === selectedVal ? ' selected' : '';
+    html += `<option value="${escapeHtml(c)}"${sel}>${escapeHtml(c)}</option>`;
+  });
+
+  if (selectedVal && !state.rotationCrops.includes(selectedVal)) {
+    html += `<option value="${escapeHtml(selectedVal)}" selected>${escapeHtml(selectedVal)}</option>`;
+  }
+
+  select.innerHTML = html;
 }
 
 function populateEcoCropDropdowns(species) {
@@ -214,6 +244,7 @@ function renderFieldsTable() {
   tbody.innerHTML = "";
 
   state.fields.forEach((f, idx) => {
+    const prevCrop = f.previous_crop ? f.previous_crop : "None";
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><strong>${escapeHtml(f.name)}</strong></td>
@@ -222,6 +253,7 @@ function renderFieldsTable() {
       <td>${f.ec.toFixed(1)}</td>
       <td><span class="badge badge-info">${escapeHtml(f.texture)}</span></td>
       <td>${f.organic_matter.toFixed(1)}%</td>
+      <td><span class="badge badge-secondary" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">${escapeHtml(prevCrop)}</span></td>
       <td>
         <button class="btn-icon btn-icon-edit" onclick="openFieldModal(${idx})" title="Edit Field">✏️</button>
         <button class="btn-icon" onclick="deleteField(${idx})" title="Delete Field">🗑️</button>
@@ -284,6 +316,9 @@ function renderResults(res) {
 
   // Suitability Matrix (V3)
   renderSuitabilityMatrix(res);
+
+  // Rotation Matrix (V4)
+  renderRotationMatrix(res);
 
   // Field Allocations Breakdown
   renderFieldAllocations(res);
@@ -369,9 +404,54 @@ function renderSuitabilityMatrix(res) {
     });
     html += "</tr>";
   });
-  html += "tbody";
+  html += "</tbody>";
 
   table.innerHTML = html;
+}
+
+function renderRotationMatrix(res) {
+  const card = document.getElementById("rotation-card");
+  const table = document.getElementById("rotation-matrix-table");
+
+  if (!res.rotation_details || res.rotation_details.length === 0) {
+    if (card) card.style.display = "none";
+    return;
+  }
+  if (card) card.style.display = "block";
+
+  const fields = state.fields.map(f => f.name);
+  const crops = state.crops.map(c => c.name);
+
+  const matrix = {};
+  res.rotation_details.forEach((item) => {
+    matrix[`${item.field}__${item.crop}`] = item;
+  });
+
+  let html = "<thead><tr><th>Field (Prev Crop) \\ Crop</th>";
+  crops.forEach(c => html += `<th>${escapeHtml(c)}</th>`);
+  html += "</tr></thead><tbody>";
+
+  fields.forEach(f => {
+    const fObj = state.fields.find(item => item.name === f);
+    const prevStr = fObj && fObj.previous_crop ? fObj.previous_crop : "None";
+    html += `<tr><th>${escapeHtml(f)}<br><span style="font-size:0.75rem; color:var(--text-muted)">Prev: ${escapeHtml(prevStr)}</span></th>`;
+    crops.forEach(c => {
+      const item = matrix[`${f}__${c}`];
+      if (item) {
+        if (item.suitable) {
+          html += `<td class="matrix-cell-suitable" title="${escapeHtml(item.reason)}">✅ Suitable</td>`;
+        } else {
+          html += `<td class="matrix-cell-unsuitable" title="${escapeHtml(item.reason)}">❌ Disallowed<br><span style="font-size:0.7rem; opacity:0.8">${escapeHtml(item.reason)}</span></td>`;
+        }
+      } else {
+        html += `<td>-</td>`;
+      }
+    });
+    html += "</tr>";
+  });
+  html += "</tbody>";
+
+  if (table) table.innerHTML = html;
 }
 
 function renderFieldAllocations(res) {
@@ -449,6 +529,7 @@ function openFieldModal(idx = null) {
   const modal = document.getElementById("field-modal");
   document.getElementById("field-edit-idx").value = idx !== null ? idx : "";
 
+  let prevCrop = "";
   if (idx !== null) {
     const f = state.fields[idx];
     document.getElementById("field-modal-title").textContent = "Edit Field";
@@ -458,6 +539,7 @@ function openFieldModal(idx = null) {
     document.getElementById("m-field-ec").value = f.ec;
     document.getElementById("m-field-texture").value = f.texture;
     document.getElementById("m-field-om").value = f.organic_matter;
+    prevCrop = f.previous_crop || "";
   } else {
     document.getElementById("field-modal-title").textContent = "Add New Field";
     document.getElementById("m-field-name").value = `Field_${state.fields.length + 1}`;
@@ -468,6 +550,7 @@ function openFieldModal(idx = null) {
     document.getElementById("m-field-om").value = 2.0;
   }
 
+  populatePreviousCropDropdown(prevCrop);
   modal.classList.add("active");
 }
 
@@ -483,13 +566,15 @@ function saveFieldModal() {
   const ec = parseFloat(document.getElementById("m-field-ec").value) || 1.0;
   const texture = document.getElementById("m-field-texture").value;
   const om = parseFloat(document.getElementById("m-field-om").value) || 2.0;
+  const prevCropVal = document.getElementById("m-field-prev-crop").value.trim();
+  const previous_crop = prevCropVal ? prevCropVal : null;
 
   if (!name || area <= 0) {
     alert("Please provide a valid field name and positive area.");
     return;
   }
 
-  const fieldData = { name, area, ph, ec, texture, organic_matter: om };
+  const fieldData = { name, area, ph, ec, texture, organic_matter: om, previous_crop };
 
   if (idxStr !== "") {
     state.fields[parseInt(idxStr)] = fieldData;

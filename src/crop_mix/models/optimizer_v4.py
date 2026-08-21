@@ -47,10 +47,11 @@ class CropMixOptimizerV4:
         self,
         solver_name: str = "appsi_highs",
         rotation_excel_path: str = "data/crop_rotation_matrix_v10_corrected.xlsx",
+        rotation_loader: Optional[RotationMatrixLoader] = None,
     ):
         self.solver_name = solver_name
         self.soil_engine = SoilSuitabilityEngine()
-        self.rotation_loader = RotationMatrixLoader(excel_path=rotation_excel_path)
+        self.rotation_loader = rotation_loader or RotationMatrixLoader(excel_path=rotation_excel_path)
 
     def solve(self, farm_inputs: FarmInputs) -> OptimizationResultV4:
         """Formulate and solve field-level crop mix optimization problem with crop rotation constraints.

@@ -26,7 +26,8 @@
         <div class="version-select-group">
           <label for="optimizer-version">Optimization Engine:</label>
           <select id="optimizer-version" class="select-input">
-            <option value="v3" selected>V3 - Field Soil Suitability (Spatial LP)</option>
+            <option value="v4" selected>V4 - Soil Suitability + Crop Rotation (Spatial LP)</option>
+            <option value="v3">V3 - Field Soil Suitability (Spatial LP)</option>
             <option value="v2">V2 - Farm Aggregate (Labor & Fertilizer LP)</option>
             <option value="v1">V1 - Farm Aggregate Basic (Land & Water LP)</option>
           </select>
@@ -86,7 +87,7 @@
         <div class="panel-header">
           <div>
             <h3>🏔️ Farm Fields & Soil Measurements</h3>
-            <p class="panel-sub">Manage physical field boundaries and soil chemistry (pH, EC, Texture)</p>
+            <p class="panel-sub">Manage physical field boundaries, soil chemistry (pH, EC, Texture), and crop history</p>
           </div>
           <button id="btn-add-field" class="btn btn-sm btn-outline">+ Add Field</button>
         </div>
@@ -101,6 +102,7 @@
                 <th>EC (dS/m)</th>
                 <th>Soil Texture</th>
                 <th>Org. Matter %</th>
+                <th>Previous Crop</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -221,6 +223,21 @@
         </div>
       </div>
 
+      <!-- Crop Rotation Suitability Matrix Grid (V4) -->
+      <div class="card suitability-card" id="rotation-card" style="display:none;">
+        <div class="card-header">
+          <div>
+            <h3>🔄 Field × Crop Rotation Suitability Matrix (V4)</h3>
+            <p class="panel-sub">Evaluates previous crop succession rules (53×53 Egyptian Rotation Matrix & Perennial Constraints)</p>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="matrix-table" id="rotation-matrix-table">
+            <!-- Dynamically populated matrix -->
+          </table>
+        </div>
+      </div>
+
       <!-- Optimal Crop Allocation Breakdown -->
       <div class="allocation-grid">
         <!-- Allocation by Field -->
@@ -287,6 +304,12 @@
             <label>Organic Matter %</label>
             <input type="number" id="m-field-om" step="0.1" min="0">
           </div>
+        </div>
+        <div class="form-group">
+          <label>Previous Crop (V4 Rotation History)</label>
+          <select id="m-field-prev-crop" class="select-input">
+            <option value="">None (Fallow / New Field)</option>
+          </select>
         </div>
       </div>
       <div class="modal-footer">

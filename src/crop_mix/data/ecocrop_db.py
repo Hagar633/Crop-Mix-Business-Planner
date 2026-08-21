@@ -60,21 +60,19 @@ class EcoCropEntry:
 
     def to_crop_parameters(
         self,
-        expected_yield: float,
-        price: float,
-        production_cost: float,
+        expected_yield: float = 5.0,
+        price: float = 400.0,
+        production_cost: float = 500.0,
         water_requirement: Optional[float] = None,
         labor_req: float = 20.0,
         labor_rate: float = 20.0,
         fert_req: float = 100.0,
         fert_rate: float = 1.5,
+        price_override: Optional[float] = None,
+        expected_yield_override: Optional[float] = None,
+        production_cost_override: Optional[float] = None,
     ) -> CropParameters:
-        """Convert EcoCrop entry into CropParameters.
-
-        yield/price/production_cost are now REQUIRED — EcoCrop has no economic data,
-        so these must come from the yield-estimation API (or the user) rather than
-        a hardcoded default.
-        """
+        """Convert EcoCrop entry into CropParameters."""
         water = water_requirement if water_requirement is not None else self.water_requirement
         if water is None:
             raise ValueError(
@@ -82,11 +80,15 @@ class EcoCropEntry:
                 f"pass water_requirement explicitly."
             )
 
+        eff_price = price_override if price_override is not None else price
+        eff_yield = expected_yield_override if expected_yield_override is not None else expected_yield
+        eff_cost = production_cost_override if production_cost_override is not None else production_cost
+
         return CropParameters(
             name=self.name,
-            expected_yield=expected_yield,
-            price=price,
-            production_cost=production_cost,
+            expected_yield=eff_yield,
+            price=eff_price,
+            production_cost=eff_cost,
             water_requirement=water,
             labor_requirement=labor_req,
             labor_cost_per_hour=labor_rate,
@@ -394,7 +396,7 @@ class EcoCropDatabase:
                 "water_requirement": entry.water_requirement,
                 "min_temp": entry.min_temp,
                 "max_temp": entry.max_temp,
-                "crop_cycle_days": entry.crop_cycle_days
+                "crop_cycle_days": entry.crop_cycle_max_days
             }
             for entry in self._crops.values()
         ]

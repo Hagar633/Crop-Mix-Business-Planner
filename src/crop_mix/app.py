@@ -24,8 +24,11 @@ from crop_mix.models.soil_suitability import SoilSuitabilityEngine
 from crop_mix.models.optimizer_v1 import CropMixOptimizerV1
 from crop_mix.models.optimizer_v2 import CropMixOptimizerV2
 from crop_mix.models.optimizer_v3 import CropMixOptimizerV3
+from crop_mix.models.optimizer_v4 import CropMixOptimizerV4
+from crop_mix.data.rotation_loader import RotationMatrixLoader
 
 ecocrop_db = EcoCropDatabase()
+rotation_loader = RotationMatrixLoader()
 
 
 app = FastAPI(
@@ -73,10 +76,11 @@ class FieldSchema(BaseModel):
     ec: float = Field(1.0, ge=0, description="Soil EC salinity (dS/m)")
     texture: str = Field("Loam", description="Soil texture class")
     organic_matter: float = Field(2.0, ge=0, description="Organic matter %")
+    previous_crop: Optional[str] = Field(None, description="Previous crop planted in field (V4)")
 
 
 class OptimizationRequestSchema(BaseModel):
-    version: str = Field("v3", description="Optimizer version: 'v1', 'v2', or 'v3'")
+    version: str = Field("v4", description="Optimizer version: 'v1', 'v2', 'v3', or 'v4'")
     water_budget: float = Field(..., ge=0, description="Available water budget in m^3")
     labor_budget: float = Field(2500.0, ge=0, description="Available labor budget in hours")
     fertilizer_budget: float = Field(15000.0, ge=0, description="Available fertilizer budget in kg")
@@ -122,6 +126,7 @@ def build_farm_inputs(req: OptimizationRequestSchema) -> FarmInputs:
             ec=f.ec,
             texture=f.texture,
             organic_matter=f.organic_matter,
+            previous_crop=f.previous_crop,
         )
         total_field_area += f.area
 
@@ -171,6 +176,36 @@ def compute_suitability_explanations(farm_inputs: FarmInputs) -> List[Dict[str, 
                 "reason": reason_str,
             })
 
+    return details
+
+
+def compute_rotation_explanations(farm_inputs: FarmInputs) -> List[Dict[str, Any]]:
+    """Compute detailed crop rotation suitability reasons for each field-crop pair (V4)."""
+    details = []
+    for f_name, f_obj in farm_inputs.fields.items():
+        prev_c = f_obj.previous_crop
+        for c_name in farm_inputs.crops.keys():
+            try:
+                suitability = rotation_loader.get_rotation_suitability(prev_c, c_name)
+                is_suitable = suitability == 1
+            except Exception as exc:
+                is_suitable = False
+                reason_str = f"Unmatched crop: {exc}"
+            else:
+                if prev_c is None or not str(prev_c).strip() or str(prev_c).lower() == "none":
+                    reason_str = "No previous crop history (unconstrained)"
+                elif is_suitable:
+                    reason_str = f"Recommended rotation after '{prev_c}'"
+                else:
+                    reason_str = f"Agronomically disallowed succession after '{prev_c}'"
+
+            details.append({
+                "field": f_name,
+                "crop": c_name,
+                "previous_crop": prev_c or "None",
+                "suitable": is_suitable,
+                "reason": reason_str,
+            })
     return details
 
 
@@ -261,6 +296,7 @@ def get_preset_farm():
             "ec": f.ec,
             "texture": f.texture,
             "organic_matter": f.organic_matter,
+            "previous_crop": f.previous_crop,
         })
 
     return {
@@ -288,9 +324,9 @@ def list_ecocrop_species(q: Optional[str] = None, category: Optional[str] = None
                 "max_ec": entry.max_ec,
                 "suitable_textures": entry.suitable_textures,
                 "water_requirement": entry.water_requirement,
-                "default_expected_yield": entry.default_expected_yield,
-                "default_price": entry.default_price,
-                "default_production_cost": entry.default_production_cost,
+                "default_expected_yield": getattr(entry, "default_expected_yield", 5.0),
+                "default_price": getattr(entry, "default_price", 400.0),
+                "default_production_cost": getattr(entry, "default_production_cost", 500.0),
             }
             for entry in results
         ]
@@ -316,10 +352,21 @@ def get_ecocrop_details(crop_name: str):
         "water_requirement": entry.water_requirement,
         "min_temp": entry.min_temp,
         "max_temp": entry.max_temp,
-        "crop_cycle_days": entry.crop_cycle_days,
-        "default_expected_yield": entry.default_expected_yield,
-        "default_price": entry.default_price,
-        "default_production_cost": entry.default_production_cost,
+        "crop_cycle_days": entry.crop_cycle_max_days,
+        "default_expected_yield": getattr(entry, "default_expected_yield", 5.0),
+        "default_price": getattr(entry, "default_price", 400.0),
+        "default_production_cost": getattr(entry, "default_production_cost", 500.0),
+    }
+
+
+@app.get("/api/rotation/matrix")
+def get_rotation_matrix_info():
+    """Return available crop list and rotation matrix metadata (V4)."""
+    crops = sorted(list(rotation_loader.matrix_crops))
+    return {
+        "crops": crops,
+        "perennial_map": rotation_loader.perennial_map,
+        "family_map": rotation_loader.family_map,
     }
 
 
@@ -415,6 +462,56 @@ def run_optimization(req: OptimizationRequestSchema):
             "crop_allocation_summary": res.crop_allocation,
             "field_allocations": field_allocations,
             "suitability_details": suitability_details,
+            "binding_constraints": binding,
+        }
+
+    elif version == "v4":
+        if not req.fields:
+            raise HTTPException(status_code=400, detail="Version 4 requires at least one field definition.")
+
+        optimizer = CropMixOptimizerV4(rotation_loader=rotation_loader)
+        res = optimizer.solve(farm_inputs)
+
+        summary_crop_alloc: Dict[str, float] = {}
+        for c in farm_inputs.crops.keys():
+            summary_crop_alloc[c] = sum(
+                res.crop_allocation[f].get(c, 0.0) for f in farm_inputs.fields.keys()
+            )
+
+        suitability_details = compute_suitability_explanations(farm_inputs)
+        rotation_details = compute_rotation_explanations(farm_inputs)
+
+        binding = identify_binding_constraints(
+            total_land=res.total_land_used, land_limit=sum(f.area for f in farm_inputs.fields.values()),
+            total_water=res.total_water_used, water_limit=res.water_budget_limit,
+            total_labor=res.total_labor_used, labor_limit=res.labor_budget_limit,
+            total_fert=res.total_fertilizer_used, fert_limit=res.fertilizer_budget_limit,
+        )
+
+        return {
+            "version": "V4 (Soil Suitability + Crop Rotation)",
+            "status": res.status,
+            "is_feasible": res.is_feasible,
+            "expected_profit": res.expected_profit,
+            "total_expected_revenue": res.total_expected_revenue,
+            "total_production_cost": res.total_production_cost,
+            "total_labor_cost": res.total_labor_cost,
+            "total_fertilizer_cost": res.total_fertilizer_cost,
+            "total_land_used": res.total_land_used,
+            "field_area_limit": sum(f.area for f in farm_inputs.fields.values()),
+            "total_water_used": res.total_water_used,
+            "water_budget_limit": res.water_budget_limit,
+            "total_labor_used": res.total_labor_used,
+            "labor_budget_limit": sanitize_val(res.labor_budget_limit),
+            "total_fertilizer_used": res.total_fertilizer_used,
+            "fertilizer_budget_limit": sanitize_val(res.fertilizer_budget_limit),
+            "crop_allocation_summary": summary_crop_alloc,
+            "field_allocations": res.crop_allocation,
+            "field_land_used": res.field_land_used,
+            "field_land_limits": res.field_land_limits,
+            "suitability_details": suitability_details,
+            "rotation_details": rotation_details,
+            "field_previous_crops": res.field_previous_crops,
             "binding_constraints": binding,
         }
 

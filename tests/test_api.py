@@ -87,10 +87,49 @@ def test_optimize_v1_endpoint():
     assert res["expected_profit"] > 0
 
 
+def test_optimize_v4_endpoint():
+    preset_resp = client.get("/api/preset")
+    preset_data = preset_resp.json()
+
+    payload = {
+        "version": "v4",
+        "water_budget": preset_data["water_budget"],
+        "labor_budget": preset_data["labor_budget"],
+        "fertilizer_budget": preset_data["fertilizer_budget"],
+        "crops": preset_data["crops"],
+        "fields": preset_data["fields"],
+    }
+
+    response = client.post("/api/optimize", json=payload)
+    assert response.status_code == 200
+    res = response.json()
+
+    assert res["is_feasible"] is True
+    assert res["expected_profit"] > 0
+    assert "field_allocations" in res
+    assert "suitability_details" in res
+    assert "rotation_details" in res
+    assert "field_previous_crops" in res
+    assert len(res["rotation_details"]) == len(preset_data["fields"]) * len(preset_data["crops"])
+    assert "binding_constraints" in res
+
+
+def test_rotation_matrix_endpoint():
+    response = client.get("/api/rotation/matrix")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "crops" in data
+    assert "perennial_map" in data
+    assert "family_map" in data
+    assert "Wheat" in data["crops"]
+    assert len(data["crops"]) >= 50
+
+
 def test_optimize_validation_errors():
     # Empty crops
     payload = {
-        "version": "v3",
+        "version": "v4",
         "water_budget": 100000,
         "crops": [],
         "fields": [{"name": "F1", "area": 10.0}],
