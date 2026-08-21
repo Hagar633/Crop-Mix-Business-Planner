@@ -1,420 +1,551 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CropMix Business Planner - Smart Farm Land Optimizer</title>
+  <title>مخطط المحاصيل الزراعية والدورة الزراعية بمصر | CropMix Egypt</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- Top Header Navigation -->
-  <header class="app-header">
-    <div class="header-container">
-      <div class="brand">
-        <div class="brand-icon">🌾</div>
-        <div>
-          <h1>CropMix <span class="brand-badge">Planner AI</span></h1>
-          <p class="brand-tagline">Field-Level Land Allocation & Financial Optimization System</p>
+  <!-- PAGE 1: LANDING PAGE -->
+  <div id="page-landing" class="page-view active">
+    <!-- Landing Navigation -->
+    <nav class="landing-nav">
+      <div class="nav-container">
+        <div class="brand">
+          <span class="brand-logo-icon">🌾</span>
+          <div>
+            <h1 class="brand-title">CropMix <span class="brand-badge-egypt">مصر EGP</span></h1>
+            <p class="brand-sub" data-i18n="landing.brandSub">المنظومة الذكية للتخطيط الزراعي والدورة الزراعية</p>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <button class="btn-lang" id="btn-lang-toggle-landing" onclick="toggleLanguage()">
+            <span>🌐</span> <span id="lang-text-landing">English</span>
+          </button>
+          <button class="btn btn-primary" onclick="navigateTo('optimizer')">
+            <span data-i18n="nav.goOptimizer">الانتقال للمخطط 🚀</span>
+          </button>
         </div>
       </div>
+    </nav>
 
-      <div class="header-actions">
-        <div class="version-select-group">
-          <label for="optimizer-version">Optimization Engine:</label>
-          <select id="optimizer-version" class="select-input">
-            <option value="v4" selected>V4 - Soil Suitability + Crop Rotation (Spatial LP)</option>
-            <option value="v3">V3 - Field Soil Suitability (Spatial LP)</option>
-            <option value="v2">V2 - Farm Aggregate (Labor & Fertilizer LP)</option>
-            <option value="v1">V1 - Farm Aggregate Basic (Land & Water LP)</option>
-          </select>
+    <!-- Hero Section with Custom Nile Valley Image Background -->
+    <header class="hero-section">
+      <div class="hero-bg-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-tag">
+          <span>🌿</span> <span data-i18n="landing.heroTag">صُمم خصيصاً للمزارع المصري</span>
         </div>
-
-        <button id="btn-load-preset" class="btn btn-secondary">
-          <span>🔄</span> Load Default Farm
-        </button>
-
-        <button id="btn-run-optimize" class="btn btn-primary btn-glow">
-          <span>🚀</span> Solve Optimal Crop Mix
-        </button>
+        <h1 data-i18n="landing.heroTitle">احسب أرباح مزرعتك بالجنيه المصري، وخطط لدورتك الزراعية بأعلى كفاءة</h1>
+        <p data-i18n="landing.heroSub">
+          برنامج ذكي يحدد أفضل توزيع للمحاصيل على أراضيك لزيادة الأرباح الصافية (EGP)، مع ترشيد مياه الري والسماد، وتطبيق قواعد الدورة الزراعية الرسمية وملائمة التربة.
+        </p>
+        <div class="hero-cta-group">
+          <button class="btn btn-hero btn-glow" onclick="navigateTo('optimizer')">
+            <span>🌾</span> <span data-i18n="landing.startBtn">ابدأ تخطيط مزرعتك الآن</span>
+          </button>
+          <button class="btn btn-secondary-hero" onclick="scrollToSection('features-section')">
+            <span>🔍</span> <span data-i18n="landing.learnMore">تعرّف على الميزات</span>
+          </button>
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <main class="main-container">
-
-    <!-- Global Farm Budget Toolbar -->
-    <section class="card budget-card">
-      <div class="card-header">
-        <h2>⚡ Global Farm Resource Budgets</h2>
-        <span class="badge badge-info" id="total-land-badge">Total Land: 100.0 ha</span>
+    <!-- Authentic Feature Cards Grid -->
+    <section class="features-section" id="features-section">
+      <div class="section-heading">
+        <h2 data-i18n="features.title">لماذا يستعين المزارع ببرنامج CropMix؟</h2>
+        <p data-i18n="features.sub">أدوات متكاملة تناسب الفلاح المصري للوصول لأعلى إنتاجية وأفضل عائد مالي</p>
       </div>
-      <div class="budget-grid">
-        <div class="input-group">
-          <label for="budget-water">
-            <span>💧 Total Water Budget</span>
-            <span class="unit">(m³)</span>
-          </label>
-          <input type="number" id="budget-water" value="400000" min="0" step="5000">
+
+      <div class="features-grid">
+
+        <!-- Card 1: Crop Rotation -->
+        <div class="feature-card">
+          <div class="feature-img-wrapper">
+            <img src="images/agrii.webp" alt="الدورة الزراعية" class="feature-img">
+            <span class="feature-badge">مصفوفة 53 محصولاً</span>
+          </div>
+          <div class="feature-body">
+            <div class="feature-icon">🔄</div>
+            <h3 data-i18n="features.f1Title">قواعد الدورة الزراعية المصرية</h3>
+            <p data-i18n="features.f1Desc">
+              يفحص تتابع المحاصيل تلقائياً لمنع التتابع الضار (مثل زراعة الطماطم بعد البطاطس) ويحمي التربة من الإجهاد وفقاً للجدول الزمني الموصى به.
+            </p>
+          </div>
         </div>
 
-        <div class="input-group">
-          <label for="budget-labor">
-            <span>👷 Total Labor Budget</span>
-            <span class="unit">(hours)</span>
-          </label>
-          <input type="number" id="budget-labor" value="2500" min="0" step="50">
+        <!-- Card 2: EGP Profits & Budget -->
+        <div class="feature-card">
+          <div class="feature-img-wrapper">
+            <img src="images/pngtree-aerial-photograph-of-green-agricultural-plots-with-vacant-land-waiting-to-image_15688971.jpg" alt="الميزانية والمياه" class="feature-img">
+            <span class="feature-badge">EGP جنيه مصري</span>
+          </div>
+          <div class="feature-body">
+            <div class="feature-icon">💧</div>
+            <h3 data-i18n="features.f2Title">ترشيد مياه الري والأرباح بالجنيه</h3>
+            <p data-i18n="features.f2Desc">
+              يحسب تكاليف الإنتاج، العمالة، والأسمدة بالجنيه المصري (EGP) ويوزّع الأراضي بناءً على حصة المياه المتاحة لتحقيق أعلى صافي ربح.
+            </p>
+          </div>
         </div>
 
-        <div class="input-group">
-          <label for="budget-fertilizer">
-            <span>🧪 Total Fertilizer Budget</span>
-            <span class="unit">(kg)</span>
-          </label>
-          <input type="number" id="budget-fertilizer" value="15000" min="0" step="500">
+        <!-- Card 3: Soil Chemistry Suitability -->
+        <div class="feature-card">
+          <div class="feature-img-wrapper">
+            <img src="images/4548ea71353ac47603509bfaa7aaf4b8.jpg" alt="ملائمة التربة" class="feature-img">
+            <span class="feature-badge">pH & EC ملوحة</span>
+          </div>
+          <div class="feature-body">
+            <div class="feature-icon">🌱</div>
+            <h3 data-i18n="features.f3Title">ملائمة التربة لكل قطعة أرض</h3>
+            <p data-i18n="features.f3Desc">
+              يطابق درجة الحموضة (pH)، ملوحة التربة (EC)، ونوع التربة (طينية، رملية، صفراء) لضمان زراعة المحصول المناسب في الأرض المناسبة.
+            </p>
+          </div>
         </div>
+
       </div>
     </section>
 
-    <!-- Interactive Config: Fields & Crops -->
-    <div class="config-grid">
+    <!-- Bottom CTA Banner -->
+    <section class="bottom-cta-banner">
+      <div class="banner-content">
+        <h2 data-i18n="landing.bottomBannerTitle">جاهز لحساب التوزيع الأمثل لمزرعتك؟</h2>
+        <p data-i18n="landing.bottomBannerSub">ادخل بيانات أرضك والمحاصيل المتاحة وسيقوم المحرك الرياضي بحساب أفضل خطة زراعية في ثوانٍ</p>
+        <button class="btn btn-hero btn-glow" onclick="navigateTo('optimizer')">
+          <span>🚀</span> <span data-i18n="landing.startBtn">ابدأ تخطيط مزرعتك الآن</span>
+        </button>
+      </div>
+    </section>
 
-      <!-- Fields Management Panel -->
-      <section class="card panel-card">
-        <div class="panel-header">
+    <footer class="landing-footer">
+      <p data-i18n="footer.text">برنامج مخطط المحاصيل الزراعية والدورة الزراعية بمصر • CropMix Business Planner</p>
+    </footer>
+  </div>
+
+
+  <!-- PAGE 2: OPTIMIZER WORKBENCH PAGE -->
+  <div id="page-optimizer" class="page-view">
+    <!-- Top Navigation -->
+    <header class="app-header">
+      <div class="header-container">
+        <div class="brand" onclick="navigateTo('landing')" style="cursor:pointer;" title="العودة للرئيسية">
+          <div class="brand-icon">🌾</div>
           <div>
-            <h3>🏔️ Farm Fields & Soil Measurements</h3>
-            <p class="panel-sub">Manage physical field boundaries, soil chemistry (pH, EC, Texture), and crop history</p>
+            <h1>CropMix <span class="brand-badge">مصر EGP</span></h1>
+            <p class="brand-tagline" data-i18n="opt.headerTagline">حاسبة التخطيط الزراعي والدورة الزراعية</p>
           </div>
-          <button id="btn-add-field" class="btn btn-sm btn-outline">+ Add Field</button>
         </div>
 
-        <div class="table-wrapper">
-          <table class="data-table" id="table-fields">
-            <thead>
-              <tr>
-                <th>Field Name</th>
-                <th>Area (ha)</th>
-                <th>pH</th>
-                <th>EC (dS/m)</th>
-                <th>Soil Texture</th>
-                <th>Org. Matter %</th>
-                <th>Previous Crop</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="fields-tbody">
-              <!-- Dynamically populated -->
-            </tbody>
-          </table>
-        </div>
-      </section>
+        <div class="header-actions">
+          <button class="btn btn-secondary" onclick="navigateTo('landing')">
+            <span>🏠</span> <span data-i18n="nav.home">الرئيسية</span>
+          </button>
 
-      <!-- Crops Management Panel -->
-      <section class="card panel-card">
-        <div class="panel-header">
-          <div>
-            <h3>🌽 Crop Catalog & Economic Parameters</h3>
-            <p class="panel-sub">Configure yield expectations, prices, costs, and soil tolerance rules</p>
-          </div>
-          <div style="display: flex; gap: 8px;">
-            <select id="select-ecocrop-import" class="select-input" style="padding: 4px 8px; font-size: 13px;">
-              <option value="">🌱 Import EcoCrop Species...</option>
+          <button class="btn-lang" id="btn-lang-toggle-opt" onclick="toggleLanguage()">
+            <span>🌐</span> <span id="lang-text-opt">English</span>
+          </button>
+
+          <div class="version-select-group">
+            <label for="optimizer-version" data-i18n="opt.engineLabel">محرك التخطيط:</label>
+            <select id="optimizer-version" class="select-input">
+              <option value="v4" selected>الإصدار 4 - الدورة الزراعية + ملائمة التربة (V4)</option>
+              <option value="v3">الإصدار 3 - ملائمة تربة الأرض (V3)</option>
+              <option value="v2">الإصدار 2 - ميزانية العمالة والسماد (V2)</option>
+              <option value="v1">الإصدار 1 - ميزانية المياه والأرض (V1)</option>
             </select>
-            <button id="btn-add-crop" class="btn btn-sm btn-outline">+ Add Crop</button>
           </div>
+
+          <button id="btn-load-preset" class="btn btn-secondary">
+            <span>🔄</span> <span data-i18n="opt.loadPreset">تحميل مزرعة افتراضية</span>
+          </button>
+
+          <button id="btn-run-optimize" class="btn btn-primary btn-glow">
+            <span>🚀</span> <span data-i18n="opt.runOptimize">احسب التوزيع الأمثل</span>
+          </button>
         </div>
+      </div>
+    </header>
 
+    <main class="main-container">
 
-        <div class="table-wrapper">
-          <table class="data-table" id="table-crops">
-            <thead>
-              <tr>
-                <th>Crop</th>
-                <th>Yield (t/ha)</th>
-                <th>Price ($/t)</th>
-                <th>Cost ($/ha)</th>
-                <th>Water (m³/ha)</th>
-                <th>Labor (h/ha)</th>
-                <th>Fert. (kg/ha)</th>
-                <th>Net Profit/ha</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="crops-tbody">
-              <!-- Dynamically populated -->
-            </tbody>
-          </table>
+      <!-- STEP 1: GLOBAL FARM RESOURCE BUDGETS -->
+      <section class="card budget-card">
+        <div class="card-header">
+          <div>
+            <h2>⚡ <span data-i18n="step1.title">الخطوة 1: ميزانية المزرعة العامة</span></h2>
+            <p class="panel-sub" data-i18n="step1.sub">حدد كمية المياه والعمالة والأسمدة المتاحة لمزرعتك بالكامل</p>
+          </div>
+          <span class="badge badge-info" id="total-land-badge">إجمالي الأرض: 100.0 هكتار / فدان</span>
+        </div>
+        <div class="budget-grid">
+          <div class="input-group">
+            <label for="budget-water">
+              <span>💧 <span data-i18n="step1.waterLabel">إجمالي ميزانية المياه</span></span>
+              <span class="unit">(متر مكعب m³)</span>
+            </label>
+            <input type="number" id="budget-water" value="400000" min="0" step="5000">
+          </div>
+
+          <div class="input-group">
+            <label for="budget-labor">
+              <span>👷 <span data-i18n="step1.laborLabel">إجمالي ساعات العمل</span></span>
+              <span class="unit">(ساعة work hrs)</span>
+            </label>
+            <input type="number" id="budget-labor" value="2500" min="0" step="50">
+          </div>
+
+          <div class="input-group">
+            <label for="budget-fertilizer">
+              <span>🧪 <span data-i18n="step1.fertLabel">إجمالي سماد المزرعة</span></span>
+              <span class="unit">(كيلوجرام kg)</span>
+            </label>
+            <input type="number" id="budget-fertilizer" value="15000" min="0" step="500">
+          </div>
         </div>
       </section>
 
-    </div>
+      <!-- CONFIG GRID: FIELDS & CROPS -->
+      <div class="config-grid">
 
-    <!-- Optimization Results Dashboard -->
-    <section class="results-section" id="results-section">
+        <!-- STEP 2: FIELDS MANAGEMENT -->
+        <section class="card panel-card">
+          <div class="panel-header">
+            <div>
+              <h3>🏔️ <span data-i18n="step2.title">الخطوة 2: أراضي المزرعة والمحصول السابق</span></h3>
+              <p class="panel-sub" data-i18n="step2.sub">حدد مساحة كل أرض، نوع التربة، والزرعة السابقة بالدورة الزراعية</p>
+            </div>
+            <button id="btn-add-field" class="btn btn-sm btn-outline"><span data-i18n="step2.addField">+ إضافة أرض جديدة</span></button>
+          </div>
 
-      <div class="section-title-row">
-        <h2>📊 Optimization Results & Allocation Plan</h2>
-        <span class="status-pill" id="status-pill">Ready to Run</span>
+          <div class="table-wrapper">
+            <table class="data-table" id="table-fields">
+              <thead>
+                <tr>
+                  <th data-i18n="th.fieldName">اسم الأرض</th>
+                  <th data-i18n="th.fieldArea">المساحة (هكتار/فدان)</th>
+                  <th data-i18n="th.ph">الحموضة pH</th>
+                  <th data-i18n="th.ec">الملوحة EC</th>
+                  <th data-i18n="th.texture">نوع التربة</th>
+                  <th data-i18n="th.om">المادة العضوية %</th>
+                  <th data-i18n="th.prevCrop">المحصول السابق</th>
+                  <th data-i18n="th.action">إجراء</th>
+                </tr>
+              </thead>
+              <tbody id="fields-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- STEP 3: CROPS MANAGEMENT (IN EGP) -->
+        <section class="card panel-card">
+          <div class="panel-header">
+            <div>
+              <h3>🌽 <span data-i18n="step3.title">الخطوة 3: المحاصيل والأسعار بالجنيه المصري (EGP)</span></h3>
+              <p class="panel-sub" data-i18n="step3.sub">حدد الإنتاجية المتوقعة، سعر البيع، والتكلفة لكل محصول بالجنيه المصري</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <select id="select-ecocrop-import" class="select-input" style="padding: 4px 8px; font-size: 13px;">
+                <option value="" data-i18n="step3.ecocropDefault">🌱 استيراد من موسوعة فاو إيكوكروب...</option>
+              </select>
+              <button id="btn-add-crop" class="btn btn-sm btn-outline"><span data-i18n="step3.addCrop">+ إضافة محصول</span></button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="data-table" id="table-crops">
+              <thead>
+                <tr>
+                  <th data-i18n="th.crop">المحصول</th>
+                  <th data-i18n="th.yield">الإنتاجية (طن/هكتار)</th>
+                  <th data-i18n="th.price">سعر الطن (EGP)</th>
+                  <th data-i18n="th.cost">التكلفة (EGP)</th>
+                  <th data-i18n="th.water">المياه (م³/هكتار)</th>
+                  <th data-i18n="th.labor">العمالة (ساعة)</th>
+                  <th data-i18n="th.fert">السماد (كجم)</th>
+                  <th data-i18n="th.netProfit">الربح الصافي (EGP)</th>
+                  <th data-i18n="th.action">إجراء</th>
+                </tr>
+              </thead>
+              <tbody id="crops-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
       </div>
 
-      <!-- Financial KPI Summary Cards -->
-      <div class="kpi-grid">
-        <div class="kpi-card profit-card">
-          <div class="kpi-icon">💰</div>
-          <div class="kpi-content">
-            <span class="kpi-label">Expected Net Profit</span>
-            <div class="kpi-value" id="kpi-profit">$0.00</div>
-            <span class="kpi-sub" id="kpi-profit-sub">Maximize Net Profit Objective</span>
+      <!-- RESULTS SECTION -->
+      <section class="results-section" id="results-section">
+
+        <div class="section-title-row">
+          <h2>📊 <span data-i18n="res.title">نتائج التخطيط وتوزيع المحاصيل على الأرض</span></h2>
+          <span class="status-pill" id="status-pill">جاهز للحساب</span>
+        </div>
+
+        <!-- Financial KPI Summary Cards (In EGP) -->
+        <div class="kpi-grid">
+          <div class="kpi-card profit-card">
+            <div class="kpi-icon">💰</div>
+            <div class="kpi-content">
+              <span class="kpi-label" data-i18n="kpi.profit">إجمالي الربح الصافي المتوقع</span>
+              <div class="kpi-value" id="kpi-profit">0 EGP</div>
+              <span class="kpi-sub" id="kpi-profit-sub" data-i18n="kpi.profitSub">الربح الصافي بالجنيه المصري (EGP)</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon">📈</div>
+            <div class="kpi-content">
+              <span class="kpi-label" data-i18n="kpi.revenue">إجمالي الإيرادات المتوقعة</span>
+              <div class="kpi-value" id="kpi-revenue">0 EGP</div>
+              <span class="kpi-sub" data-i18n="kpi.revenueSub">قيمة بيع المحاصيل الإجمالية</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon">📉</div>
+            <div class="kpi-content">
+              <span class="kpi-label" data-i18n="kpi.expenses">إجمالي التكاليف والمصروفات</span>
+              <div class="kpi-value" id="kpi-expenses">0 EGP</div>
+              <span class="kpi-sub" id="kpi-expenses-sub">زراعة + عمالة + أسمدة</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon">⚙️</div>
+            <div class="kpi-content">
+              <span class="kpi-label" data-i18n="kpi.status">حالة الحل البرمجي</span>
+              <div class="kpi-value" id="kpi-status">Optimal</div>
+              <span class="kpi-sub" id="kpi-solver-name">المحرك: Pyomo + HiGHS</span>
+            </div>
           </div>
         </div>
 
-        <div class="kpi-card">
-          <div class="kpi-icon">📈</div>
-          <div class="kpi-content">
-            <span class="kpi-label">Gross Revenue</span>
-            <div class="kpi-value" id="kpi-revenue">$0.00</div>
-            <span class="kpi-sub">Total Expected Crop Sales</span>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon">📉</div>
-          <div class="kpi-content">
-            <span class="kpi-label">Total Expenses</span>
-            <div class="kpi-value" id="kpi-expenses">$0.00</div>
-            <span class="kpi-sub" id="kpi-expenses-sub">Production + Labor + Fertilizer</span>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon">⚙️</div>
-          <div class="kpi-content">
-            <span class="kpi-label">Solver Status</span>
-            <div class="kpi-value" id="kpi-status">Optimal</div>
-            <span class="kpi-sub" id="kpi-solver-name">Engine: Pyomo + HiGHS</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Resource Capacity Utilization Progress Meters -->
-      <div class="card resource-card">
-        <h3>📊 Resource Capacity & Budget Utilization</h3>
-        <div class="resource-meters-grid" id="resource-meters-container">
-          <!-- Dynamically populated -->
-        </div>
-      </div>
-
-      <!-- Soil Suitability Matrix Grid (V3) -->
-      <div class="card suitability-card" id="suitability-card">
-        <div class="card-header">
-          <div>
-            <h3>🌱 Field × Crop Soil Suitability Matrix</h3>
-            <p class="panel-sub">Rule-based agronomic screening (pH tolerance, EC salinity max, texture match)</p>
-          </div>
-        </div>
-        <div class="table-wrapper">
-          <table class="matrix-table" id="matrix-table">
-            <!-- Dynamically populated matrix -->
-          </table>
-        </div>
-      </div>
-
-      <!-- Crop Rotation Suitability Matrix Grid (V4) -->
-      <div class="card suitability-card" id="rotation-card" style="display:none;">
-        <div class="card-header">
-          <div>
-            <h3>🔄 Field × Crop Rotation Suitability Matrix (V4)</h3>
-            <p class="panel-sub">Evaluates previous crop succession rules (53×53 Egyptian Rotation Matrix & Perennial Constraints)</p>
-          </div>
-        </div>
-        <div class="table-wrapper">
-          <table class="matrix-table" id="rotation-matrix-table">
-            <!-- Dynamically populated matrix -->
-          </table>
-        </div>
-      </div>
-
-      <!-- Optimal Crop Allocation Breakdown -->
-      <div class="allocation-grid">
-        <!-- Allocation by Field -->
-        <div class="card">
-          <h3>📍 Optimal Allocation by Field (Hectares)</h3>
-          <div id="field-allocations-container" class="field-alloc-list">
-            <!-- Dynamically populated cards -->
-          </div>
-        </div>
-
-        <!-- Binding Constraints & Bottlenecks -->
-        <div class="card">
-          <h3>🔍 Binding Constraint Analyzer</h3>
-          <p class="panel-sub">Identifies resources that reached 100% capacity and restricted profit</p>
-          <div id="binding-constraints-container" class="binding-list">
+        <!-- Resource Capacity Utilization Progress Meters -->
+        <div class="card resource-card">
+          <h3>📊 <span data-i18n="res.resourceTitle">نسبة استهلاك ميزانية المزرعة والموارد</span></h3>
+          <div class="resource-meters-grid" id="resource-meters-container">
             <!-- Dynamically populated -->
           </div>
         </div>
-      </div>
 
-    </section>
+        <!-- Crop Rotation Suitability Matrix Grid (V4) -->
+        <div class="card suitability-card" id="rotation-card" style="display:none;">
+          <div class="card-header">
+            <div>
+              <h3>🔄 <span data-i18n="res.rotationTitle">مصفوفة الدورة الزراعية المصرية لكل أرض (V4)</span></h3>
+              <p class="panel-sub" data-i18n="res.rotationSub">تقييم المحصول السابق وتجنب التتابع الضار حسب الجدول الرسمي لـ 53 محصولاً</p>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table class="matrix-table" id="rotation-matrix-table">
+              <!-- Dynamically populated matrix -->
+            </table>
+          </div>
+        </div>
 
-  </main>
+        <!-- Soil Suitability Matrix Grid (V3) -->
+        <div class="card suitability-card" id="suitability-card">
+          <div class="card-header">
+            <div>
+              <h3>🌱 <span data-i18n="res.soilTitle">مصفوفة ملائمة التربة والأرض للمحاصيل</span></h3>
+              <p class="panel-sub" data-i18n="res.soilSub">فحص درجات الحموضة (pH)، الملوحة (EC)، ونوع التربة المناسب</p>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table class="matrix-table" id="matrix-table">
+              <!-- Dynamically populated matrix -->
+            </table>
+          </div>
+        </div>
 
-  <!-- Edit Field Modal -->
+        <!-- Optimal Crop Allocation Breakdown -->
+        <div class="allocation-grid">
+          <!-- Allocation by Field -->
+          <div class="card">
+            <h3>📍 <span data-i18n="res.allocTitle">توزيع الزراعة الأمثل لكل قطعة أرض (هكتار/فدان)</span></h3>
+            <div id="field-allocations-container" class="field-alloc-list">
+              <!-- Dynamically populated cards -->
+            </div>
+          </div>
+
+          <!-- Binding Constraints & Bottlenecks -->
+          <div class="card">
+            <h3>🔍 <span data-i18n="res.bindingTitle">محلل القيود المحددة للربح (الموارد المنتهية)</span></h3>
+            <p class="panel-sub" data-i18n="res.bindingSub">يحدد المورد الذي استُهلك بنسبة 100% ومنع زيادة الربح</p>
+            <div id="binding-constraints-container" class="binding-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <footer class="app-footer">
+      <p data-i18n="footer.text">برنامج مخطط المحاصيل الزراعية والدورة الزراعية بمصر • CropMix Business Planner</p>
+    </footer>
+  </div>
+
+  <!-- EDIT FIELD MODAL -->
   <div class="modal-backdrop" id="field-modal">
     <div class="modal">
       <div class="modal-header">
-        <h3 id="field-modal-title">Edit Field</h3>
+        <h3 id="field-modal-title">تعديل بيانات الأرض</h3>
         <button class="modal-close" onclick="closeFieldModal()">&times;</button>
       </div>
       <div class="modal-body">
         <input type="hidden" id="field-edit-idx">
         <div class="form-group">
-          <label>Field Name</label>
+          <label data-i18n="modal.fieldName">اسم قطعة الأرض</label>
           <input type="text" id="m-field-name">
         </div>
         <div class="form-group">
-          <label>Area (hectares)</label>
+          <label data-i18n="modal.fieldArea">المساحة (هكتار / فدان)</label>
           <input type="number" id="m-field-area" step="0.1" min="0.1">
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Soil pH (0 - 14)</label>
+            <label data-i18n="modal.ph">حموضة التربة (pH)</label>
             <input type="number" id="m-field-ph" step="0.1" min="0" max="14">
           </div>
           <div class="form-group">
-            <label>Salinity EC (dS/m)</label>
+            <label data-i18n="modal.ec">ملوحة التربة (EC dS/m)</label>
             <input type="number" id="m-field-ec" step="0.1" min="0">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Soil Texture</label>
+            <label data-i18n="modal.texture">نوع التربة</label>
             <select id="m-field-texture" class="select-input">
-              <option value="Loam">Loam</option>
-              <option value="Clay">Clay</option>
-              <option value="Sandy">Sandy</option>
-              <option value="Silt">Silt</option>
-              <option value="Sandy Loam">Sandy Loam</option>
+              <option value="Loam">طينية صفراء (Loam)</option>
+              <option value="Clay">طينية ثقيلة (Clay)</option>
+              <option value="Sandy">رملية (Sandy)</option>
+              <option value="Silt">طميية (Silt)</option>
+              <option value="Sandy Loam">صفراء رملية (Sandy Loam)</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Organic Matter %</label>
+            <label data-i18n="modal.om">المادة العضوية %</label>
             <input type="number" id="m-field-om" step="0.1" min="0">
           </div>
         </div>
         <div class="form-group">
-          <label>Previous Crop (V4 Rotation History)</label>
+          <label data-i18n="modal.prevCrop">المحصول السابق (سجل الدورة الزراعية V4)</label>
           <select id="m-field-prev-crop" class="select-input">
-            <option value="">None (Fallow / New Field)</option>
+            <option value="">لا يوجد / أرض بور (None)</option>
           </select>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeFieldModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveFieldModal()">Save Field</button>
+        <button class="btn btn-secondary" onclick="closeFieldModal()" data-i18n="btn.cancel">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveFieldModal()" data-i18n="btn.save">حفظ الأرض</button>
       </div>
     </div>
   </div>
 
-  <!-- Edit Crop Modal -->
+  <!-- EDIT CROP MODAL (IN EGP) -->
   <div class="modal-backdrop" id="crop-modal">
     <div class="modal modal-lg">
       <div class="modal-header">
-        <h3 id="crop-modal-title">Edit Crop Parameters</h3>
+        <h3 id="crop-modal-title">تعديل بيانات المحصول والأسعار</h3>
         <button class="modal-close" onclick="closeCropModal()">&times;</button>
       </div>
       <div class="modal-body">
         <input type="hidden" id="crop-edit-idx">
         <div class="form-group" style="background: rgba(16, 185, 129, 0.08); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(16, 185, 129, 0.2);">
-          <label style="color: #10b981; font-weight: 600;">🌱 Auto-fill Soil & Water Parameters from FAO EcoCrop DB</label>
+          <label style="color: #10b981; font-weight: 600;" data-i18n="modal.ecocropAuto">🌱 استيراد متطلبات التربة والمياه تلقائياً من موسوعة فاو إيكوكروب</label>
           <select id="m-ecocrop-select" class="select-input" onchange="autoFillFromEcoCropModal(this.value)">
-            <option value="">Select FAO EcoCrop Species to Auto-Fill...</option>
+            <option value="">اختر نوع المحصول من قائمة فاو...</option>
           </select>
         </div>
         <div class="form-row">
-
           <div class="form-group">
-            <label>Crop Name</label>
+            <label data-i18n="modal.cropName">اسم المحصول</label>
             <input type="text" id="m-crop-name">
           </div>
           <div class="form-group">
-            <label>Expected Yield (t/ha)</label>
+            <label data-i18n="modal.yield">الإنتاجية المتوقعة (طن/هكتار)</label>
             <input type="number" id="m-crop-yield" step="0.1" min="0.1">
           </div>
           <div class="form-group">
-            <label>Market Price ($/ton)</label>
-            <input type="number" id="m-crop-price" step="1" min="0">
+            <label data-i18n="modal.price">سعر بيع الطن بالجنيه (EGP/ton)</label>
+            <input type="number" id="m-crop-price" step="100" min="0">
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>Base Prod Cost ($/ha)</label>
-            <input type="number" id="m-crop-cost" step="10" min="0">
+            <label data-i18n="modal.cost">تكلفة الزراعة بالجنيه (EGP/ha)</label>
+            <input type="number" id="m-crop-cost" step="500" min="0">
           </div>
           <div class="form-group">
-            <label>Water Req (m³/ha)</label>
+            <label data-i18n="modal.water">احتياج المياه (م³/هكتار)</label>
             <input type="number" id="m-crop-water" step="100" min="0">
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>Labor Req (hours/ha)</label>
+            <label data-i18n="modal.labor">احتياج العمالة (ساعة/هكتار)</label>
             <input type="number" id="m-crop-labor" step="1" min="0">
           </div>
           <div class="form-group">
-            <label>Labor Cost ($/hour)</label>
+            <label data-i18n="modal.laborRate">أجرة ساعة العمل (EGP/ساعة)</label>
             <input type="number" id="m-crop-labor-rate" step="1" min="0">
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>Fertilizer Req (kg/ha)</label>
+            <label data-i18n="modal.fert">احتياج السماد (كجم/هكتار)</label>
             <input type="number" id="m-crop-fert" step="5" min="0">
           </div>
           <div class="form-group">
-            <label>Fertilizer Cost ($/kg)</label>
+            <label data-i18n="modal.fertRate">سعر كيلو السماد (EGP/كجم)</label>
             <input type="number" id="m-crop-fert-rate" step="0.1" min="0">
           </div>
         </div>
 
-        <h4 class="modal-subtitle">Soil Suitability Thresholds (V3)</h4>
+        <h4 class="modal-subtitle" data-i18n="modal.soilLimitsTitle">شروط ملائمة التربة (V3)</h4>
         <div class="form-row">
           <div class="form-group">
-            <label>Min Tolerable pH</label>
+            <label data-i18n="modal.minPh">أقل درجة حموضة تحمل</label>
             <input type="number" id="m-crop-min-ph" step="0.1" min="0" max="14">
           </div>
           <div class="form-group">
-            <label>Max Tolerable pH</label>
+            <label data-i18n="modal.maxPh">أعلى درجة حموضة تحمل</label>
             <input type="number" id="m-crop-max-ph" step="0.1" min="0" max="14">
           </div>
           <div class="form-group">
-            <label>Max Tolerable EC (dS/m)</label>
+            <label data-i18n="modal.maxEc">أقصى ملوحة متحملة (EC dS/m)</label>
             <input type="number" id="m-crop-max-ec" step="0.1" min="0">
           </div>
         </div>
 
         <div class="form-group">
-          <label>Suitable Soil Textures (comma separated)</label>
-          <input type="text" id="m-crop-textures" placeholder="e.g. Loam, Clay, Silt">
+          <label data-i18n="modal.textures">أنواع التربة المناسبة (مفصولة بفواصل)</label>
+          <input type="text" id="m-crop-textures" placeholder="مثال: Loam, Clay, Silt">
         </div>
 
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeCropModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveCropModal()">Save Crop</button>
+        <button class="btn btn-secondary" onclick="closeCropModal()" data-i18n="btn.cancel">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveCropModal()" data-i18n="btn.save">حفظ المحصول</button>
       </div>
     </div>
   </div>
-
-  <footer class="app-footer">
-    <p>CropMix Business Planner • Powered by Pyomo & HiGHS Continuous Linear Programming Solver</p>
-  </footer>
 
   <script src="app.js"></script>
 </body>

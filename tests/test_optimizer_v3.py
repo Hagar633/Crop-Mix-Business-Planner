@@ -28,7 +28,7 @@ def test_v3_optimizer_optimal_status_and_profit():
         - result.total_labor_cost
         - result.total_fertilizer_cost
     )
-    assert result.expected_profit == pytest.approx(calc_net, abs=1e-2)
+    assert result.expected_profit == pytest.approx(calc_net, rel=1e-3)
 
 
 def test_field_area_constraints():

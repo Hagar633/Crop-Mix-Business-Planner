@@ -59,13 +59,13 @@ class SoilRequirementSchema(BaseModel):
 class CropSchema(BaseModel):
     name: str
     expected_yield: float = Field(..., gt=0, description="Yield in metric tons/ha")
-    price: float = Field(..., ge=0, description="Price in $/ton")
-    production_cost: float = Field(..., ge=0, description="Base production cost $/ha")
+    price: float = Field(..., ge=0, description="Price in EGP/ton")
+    production_cost: float = Field(..., ge=0, description="Base production cost EGP/ha")
     water_requirement: float = Field(..., ge=0, description="Water requirement m^3/ha")
     labor_requirement: float = Field(0.0, ge=0, description="Labor hours/ha")
-    labor_cost_per_hour: float = Field(20.0, ge=0, description="Labor cost $/hour")
+    labor_cost_per_hour: float = Field(20.0, ge=0, description="Labor cost EGP/hour")
     fertilizer_requirement: float = Field(0.0, ge=0, description="Fertilizer kg/ha")
-    fertilizer_cost_per_kg: float = Field(1.5, ge=0, description="Fertilizer cost $/kg")
+    fertilizer_cost_per_kg: float = Field(1.5, ge=0, description="Fertilizer cost EGP/kg")
     soil_requirement: Optional[SoilRequirementSchema] = None
 
 

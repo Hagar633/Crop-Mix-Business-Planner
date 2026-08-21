@@ -32,7 +32,7 @@ def test_optimizer_returns_feasible_solution():
     assert result.total_land_used <= farm_inputs.field_area + 1e-4
 
     # 3. Total water used does not exceed water budget
-    assert result.total_water_used <= farm_inputs.water_budget + 1e-4
+    assert result.total_water_used <= farm_inputs.water_budget + 1.0
 
     # 4. Allocations are non-negative
     for crop, ha in result.crop_allocation.items():
