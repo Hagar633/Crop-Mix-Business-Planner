@@ -34,24 +34,32 @@
       </div>
     </nav>
 
-    <!-- Hero Section with Custom Nile Valley Image Background -->
+    <!-- Modern Split Hero Section -->
     <header class="hero-section">
-      <div class="hero-bg-overlay"></div>
-      <div class="hero-content">
-        <div class="hero-tag">
-          <span>🌿</span> <span data-i18n="landing.heroTag">صُمم خصيصاً للمزارع المصري</span>
+      <div class="hero-container">
+        <div class="hero-content">
+          <div class="hero-tag">
+            <span>🌿</span> <span data-i18n="landing.heroTag">صُمم خصيصاً للمزارع المصري</span>
+          </div>
+          <h1 data-i18n="landing.heroTitle">احسب أرباح مزرعتك بالجنيه المصري، وخطط لدورتك الزراعية بأعلى كفاءة</h1>
+          <p data-i18n="landing.heroSub">
+            برنامج ذكي يحدد أفضل توزيع للمحاصيل على أراضيك لزيادة الأرباح الصافية (EGP)، مع ترشيد مياه الري والسماد، وتطبيق قواعد الدورة الزراعية الرسمية وملائمة التربة.
+          </p>
+          <div class="hero-cta-group">
+            <button class="btn btn-hero" onclick="navigateTo('optimizer')">
+              <span>🌾</span> <span data-i18n="landing.startBtn">ابدأ تخطيط مزرعتك الآن</span>
+            </button>
+            <button class="btn btn-secondary-hero" onclick="scrollToSection('features-section')">
+              <span>🔍</span> <span data-i18n="landing.learnMore">تعرّف على الميزات</span>
+            </button>
+          </div>
         </div>
-        <h1 data-i18n="landing.heroTitle">احسب أرباح مزرعتك بالجنيه المصري، وخطط لدورتك الزراعية بأعلى كفاءة</h1>
-        <p data-i18n="landing.heroSub">
-          برنامج ذكي يحدد أفضل توزيع للمحاصيل على أراضيك لزيادة الأرباح الصافية (EGP)، مع ترشيد مياه الري والسماد، وتطبيق قواعد الدورة الزراعية الرسمية وملائمة التربة.
-        </p>
-        <div class="hero-cta-group">
-          <button class="btn btn-hero btn-glow" onclick="navigateTo('optimizer')">
-            <span>🌾</span> <span data-i18n="landing.startBtn">ابدأ تخطيط مزرعتك الآن</span>
-          </button>
-          <button class="btn btn-secondary-hero" onclick="scrollToSection('features-section')">
-            <span>🔍</span> <span data-i18n="landing.learnMore">تعرّف على الميزات</span>
-          </button>
+
+        <div class="hero-image-card">
+          <img src="images/4548ea71353ac47603509bfaa7aaf4b8.jpg" alt="الفلاح المصري والمحاصيل" class="hero-img">
+          <div class="hero-img-badge">
+            🇪🇬 الدورة الزراعية بمصر EGP
+          </div>
         </div>
       </div>
     </header>
@@ -98,7 +106,7 @@
         <!-- Card 3: Soil Chemistry Suitability -->
         <div class="feature-card">
           <div class="feature-img-wrapper">
-            <img src="images/4548ea71353ac47603509bfaa7aaf4b8.jpg" alt="ملائمة التربة" class="feature-img">
+            <img src="images/pngtree-palm-trees-in-the-fertile-nile-river-valley-egypt-agriculture-and-image_16333770.jpg" alt="ملائمة التربة" class="feature-img">
             <span class="feature-badge">pH & EC ملوحة</span>
           </div>
           <div class="feature-body">
@@ -118,7 +126,7 @@
       <div class="banner-content">
         <h2 data-i18n="landing.bottomBannerTitle">جاهز لحساب التوزيع الأمثل لمزرعتك؟</h2>
         <p data-i18n="landing.bottomBannerSub">ادخل بيانات أرضك والمحاصيل المتاحة وسيقوم المحرك الرياضي بحساب أفضل خطة زراعية في ثوانٍ</p>
-        <button class="btn btn-hero btn-glow" onclick="navigateTo('optimizer')">
+        <button class="btn btn-hero" onclick="navigateTo('optimizer')">
           <span>🚀</span> <span data-i18n="landing.startBtn">ابدأ تخطيط مزرعتك الآن</span>
         </button>
       </div>
@@ -138,7 +146,7 @@
         <div class="brand" onclick="navigateTo('landing')" style="cursor:pointer;" title="العودة للرئيسية">
           <div class="brand-icon">🌾</div>
           <div>
-            <h1>CropMix <span class="brand-badge">مصر EGP</span></h1>
+            <h1>CropMix <span class="brand-badge-egypt">مصر EGP</span></h1>
             <p class="brand-tagline" data-i18n="opt.headerTagline">حاسبة التخطيط الزراعي والدورة الزراعية</p>
           </div>
         </div>
@@ -166,7 +174,7 @@
             <span>🔄</span> <span data-i18n="opt.loadPreset">تحميل مزرعة افتراضية</span>
           </button>
 
-          <button id="btn-run-optimize" class="btn btn-primary btn-glow">
+          <button id="btn-run-optimize" class="btn btn-primary">
             <span>🚀</span> <span data-i18n="opt.runOptimize">احسب التوزيع الأمثل</span>
           </button>
         </div>
