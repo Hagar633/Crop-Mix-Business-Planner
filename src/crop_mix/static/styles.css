@@ -1,7 +1,6 @@
 /* CropMix Egypt - Modern & Authentic Agricultural UI Stylesheet */
 
 :root {
-  /* Bright, Clean Agricultural Color Palette */
   --bg-main: #f3f7f4;
   --bg-card: #ffffff;
   --bg-subtle: #ebf2ec;
@@ -65,7 +64,7 @@ body {
 }
 
 /* ==========================================================================
-   PAGE 1: LANDING PAGE STYLES
+   LANDING PAGE STYLES
    ========================================================================== */
 
 .landing-nav {
@@ -139,7 +138,7 @@ body {
   color: #ffffff;
 }
 
-/* Modern Hero Section */
+/* Split Hero Section */
 .hero-section {
   background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
   color: #ffffff;
@@ -293,7 +292,6 @@ html[dir="ltr"] .hero-img-badge {
   border-radius: 20px;
   font-size: 0.78rem;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 html[dir="ltr"] .feature-badge {
   right: auto;
@@ -322,31 +320,8 @@ html[dir="ltr"] .feature-badge {
   line-height: 1.7;
 }
 
-/* Bottom CTA Banner */
-.bottom-cta-banner {
-  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-subtle) 100%);
-  border-top: 1px solid var(--border-color);
-  padding: 60px 24px;
-  text-align: center;
-}
-.banner-content {
-  max-width: 800px;
-  margin: 0 auto;
-}
-.banner-content h2 {
-  font-size: 2.2rem;
-  font-weight: 900;
-  color: var(--primary-nile);
-  margin-bottom: 14px;
-}
-.banner-content p {
-  font-size: 1.1rem;
-  color: var(--text-muted);
-  margin-bottom: 28px;
-}
-
 /* ==========================================================================
-   PAGE 2: OPTIMIZER WORKBENCH STYLES
+   OPTIMIZER INPUT & RESULTS STYLES
    ========================================================================== */
 
 .app-header {
@@ -364,12 +339,12 @@ html[dir="ltr"] .feature-badge {
   gap: 12px;
   flex-wrap: wrap;
 }
-.version-select-group {
+.engine-inline-select {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.version-select-group label {
+.engine-inline-select label {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--text-muted);
@@ -427,6 +402,9 @@ html[dir="ltr"] .feature-badge {
   background: linear-gradient(135deg, #e9c46a, #d4a373);
   transform: translateY(-2px);
 }
+.btn-block {
+  width: 100%;
+}
 .btn-secondary {
   background: var(--bg-subtle);
   color: var(--primary-nile);
@@ -458,6 +436,52 @@ html[dir="ltr"] .feature-badge {
 .btn-sm {
   padding: 6px 14px;
   font-size: 0.85rem;
+}
+
+/* Stepper Progress Bar */
+.input-steps-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 16px 24px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 4px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.step-indicator.active {
+  color: var(--primary-nile);
+}
+.step-num {
+  background: var(--bg-subtle);
+  color: var(--primary-nile);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+.step-indicator.active .step-num {
+  background: var(--primary-nile);
+  color: #ffffff;
+}
+.step-connector {
+  height: 2px;
+  width: 40px;
+  background: var(--border-color);
 }
 
 /* Main Container */
@@ -605,22 +629,33 @@ html[dir="ltr"] .data-table {
   opacity: 1;
 }
 
-/* Results Section */
-.results-section {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+/* Generate Plan Bar */
+.generate-plan-bar {
+  margin-top: 10px;
 }
-.section-title-row {
+
+/* RESULTS PAGE STYLES */
+.plan-hero-card {
+  background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
+  color: #ffffff;
+  padding: 30px;
+  border-radius: var(--radius-lg);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  flex-wrap: wrap;
+  gap: 20px;
+  box-shadow: var(--shadow-glow);
 }
-.section-title-row h2 {
-  font-size: 1.6rem;
+.plan-hero-info h2 {
+  font-size: 1.8rem;
   font-weight: 900;
-  color: var(--primary-nile);
+  margin-top: 8px;
+  margin-bottom: 6px;
+}
+.plan-hero-info p {
+  color: #b7e4c7;
+  font-size: 1rem;
 }
 
 .status-pill {
@@ -633,9 +668,9 @@ html[dir="ltr"] .data-table {
   border-radius: 20px;
 }
 .status-pill.success {
-  background: var(--success-bg);
-  color: var(--success-text);
-  border-color: var(--success-border);
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 /* KPI Cards */
@@ -695,6 +730,100 @@ html[dir="ltr"] .data-table {
 .kpi-sub {
   font-size: 0.78rem;
   color: var(--text-dim);
+}
+
+/* Field Allocation Seasonal Cards */
+.field-alloc-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  margin-top: 14px;
+}
+.field-plan-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.field-plan-card:hover {
+  border-color: var(--primary-green);
+  transform: translateY(-2px);
+}
+
+.field-plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+.field-title-text {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--primary-nile);
+}
+.field-area-tag {
+  background: var(--bg-subtle);
+  color: var(--primary-nile);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.field-prev-row {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.field-crop-allocation-box {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.crop-alloc-name {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--primary-nile);
+  margin-bottom: 4px;
+}
+.crop-alloc-ha {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--primary-green);
+}
+.crop-alloc-profit {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--success-text);
+  margin-top: 6px;
+}
+
+.field-badges-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Accordion Details */
+.details-accordion {
+  cursor: pointer;
+}
+.accordion-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+.accordion-content {
+  padding-top: 16px;
+  cursor: default;
 }
 
 /* Resource Meters */
@@ -769,47 +898,6 @@ html[dir="ltr"] .data-table {
 .matrix-cell-unsuitable {
   background: var(--danger-bg);
   color: var(--danger-text);
-}
-
-/* Allocation Cards */
-.allocation-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-}
-@media (min-width: 900px) {
-  .allocation-grid {
-    grid-template-columns: 2fr 1fr;
-  }
-}
-
-.field-alloc-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
-  margin-top: 14px;
-}
-.field-alloc-card {
-  background: var(--bg-main);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 16px;
-}
-.field-alloc-header {
-  display: flex;
-  justify-content: space-between;
-  font-weight: 800;
-  font-size: 1rem;
-  color: var(--primary-nile);
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-color);
-}
-.crop-alloc-item {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem;
-  padding: 4px 0;
 }
 
 /* Binding Constraints */
@@ -967,4 +1055,19 @@ html[dir="ltr"] .data-table {
   color: var(--text-dim);
   border-top: 1px solid var(--border-color);
   background: #ffffff;
+}
+
+/* Print Styles */
+@media print {
+  .app-header, .btn, .landing-nav, .details-accordion summary {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+  .card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
 }

@@ -1,4 +1,4 @@
-// Crop Mix Planner Frontend Application Logic - Egyptian Farmer Edition (Bilingual & EGP)
+// Crop Mix Planner Frontend Application Logic - Clean Farmer Edition (Bilingual & EGP)
 
 // Application State
 const state = {
@@ -13,42 +13,40 @@ const state = {
   lastResult: null,
 };
 
-// Bilingual Translation Dictionary
+// Bilingual Translation Dictionary (Clean, Natural Arabic & English)
 const i18nData = {
   ar: {
     "landing.brandSub": "المنظومة الذكية للتخطيط الزراعي والدورة الزراعية",
-    "nav.goOptimizer": "الانتقال للمخطط 🚀",
-    "landing.heroTag": "صُمم خصيصاً للمزارع المصري",
-    "landing.heroTitle": "احسب أرباح مزرعتك بالجنيه المصري، وخطط لدورتك الزراعية بأعلى كفاءة",
-    "landing.heroSub": "برنامج ذكي يحدد أفضل توزيع للمحاصيل على أراضيك لزيادة الأرباح الصافية (EGP)، مع ترشيد مياه الري والسماد، وتطبيق قواعد الدورة الزراعية الرسمية وملائمة التربة.",
+    "nav.goOptimizer": "إدخال بيانات المزرعة 🚀",
+    "landing.heroTag": "مصمم للمزارع المصري",
+    "landing.heroTitle": "احسب أرباح مزرعتك وخطط لدورتك الزراعية الذكية",
+    "landing.heroSub": "برنامج ذكي يحدد أفضل توزيع للمحاصيل على أراضيك لزيادة الربح الصافي، وترشيد مياه الري والسماد، وتطبيق قواعد الدورة الزراعية الرسمية.",
     "landing.startBtn": "ابدأ تخطيط مزرعتك الآن",
-    "landing.learnMore": "تعرّف على الميزات",
-    "features.title": "لماذا يستعين المزارع ببرنامج CropMix؟",
-    "features.sub": "أدوات متكاملة تناسب الفلاح المصري للوصول لأعلى إنتاجية وأفضل عائد مالي",
-    "features.f1Title": "قواعد الدورة الزراعية المصرية",
-    "features.f1Desc": "يفحص تتابع المحاصيل تلقائياً لمنع التتابع الضار (مثل زراعة الطماطم بعد البطاطس) ويحمي التربة من الإجهاد وفقاً للجدول الزمني الموصى به.",
-    "features.f2Title": "ترشيد مياه الري والأرباح بالجنيه",
-    "features.f2Desc": "يحسب تكاليف الإنتاج، العمالة، والأسمدة بالجنيه المصري (EGP) ويوزّع الأراضي بناءً على حصة المياه المتاحة لتحقيق أعلى صافي ربح.",
-    "features.f3Title": "ملائمة التربة لكل قطعة أرض",
-    "features.f3Desc": "يطابق درجة الحموضة (pH)، ملوحة التربة (EC)، ونوع التربة (طينية، رملية، صفراء) لضمان زراعة المحصول المناسب في الأرض المناسبة.",
-    "landing.bottomBannerTitle": "جاهز لحساب التوزيع الأمثل لمزرعتك؟",
-    "landing.bottomBannerSub": "ادخل بيانات أرضك والمحاصيل المتاحة وسيقوم المحرك الرياضي بحساب أفضل خطة زراعية في ثوانٍ",
-    "footer.text": "برنامج مخطط المحاصيل الزراعية والدورة الزراعية بمصر • CropMix Business Planner",
+    "landing.learnMore": "تعرّف على المميزات",
+    "features.title": "مميزات برنامج CropMix",
+    "features.sub": "أدوات متكاملة تناسب الفلاح للوصول لأعلى إنتاجية وأفضل عائد مالي",
+    "features.f1Title": "قواعد الدورة الزراعية",
+    "features.f1Desc": "يفحص تتابع المحاصيل تلقائياً لمنع الإجهاد والأمراض (مثل تجنب الطماطم بعد البطاطس) وفق الجدول الموصى به.",
+    "features.f2Title": "ترشيد المياه والميزانية",
+    "features.f2Desc": "يحسب التكاليف والأرباح بدقة ويوزع الزراعة على حسب حصة المياه المتاحة لتحقيق أقصى عائد صافٍ.",
+    "features.f3Title": "ملائمة نوع التربة",
+    "features.f3Desc": "يطابق حموضة التربة، الملوحة، ونوع الأرض (طينية، رملية، صفراء) لضمان اختيار المحصول الأنسب لكل قطعة أرض.",
+    "footer.text": "برنامج مخطط المحاصيل والدورة الزراعية • CropMix Business Planner",
     "nav.home": "الرئيسية",
-    "opt.headerTagline": "حاسبة التخطيط الزراعي والدورة الزراعية",
-    "opt.engineLabel": "محرك التخطيط:",
+    "opt.headerTagline": "إعداد بيانات المزرعة والأراضي",
+    "opt.engineLabel": "المحرك:",
     "opt.loadPreset": "تحميل مزرعة افتراضية",
-    "opt.runOptimize": "احسب التوزيع الأمثل",
-    "step1.title": "الخطوة 1: ميزانية المزرعة العامة",
-    "step1.sub": "حدد كمية المياه والعمالة والأسمدة المتاحة لمزرعتك بالكامل",
-    "step1.waterLabel": "إجمالي ميزانية المياه",
-    "step1.laborLabel": "إجمالي ساعات العمل",
-    "step1.fertLabel": "إجمالي سماد المزرعة",
-    "step2.title": "الخطوة 2: أراضي المزرعة والمحصول السابق",
-    "step2.sub": "حدد مساحة كل أرض، نوع التربة، والزرعة السابقة بالدورة الزراعية",
+    "opt.generatePlanBtn": "توليد الخطة الزراعية للمواسم القادمة 🚀",
+    "step1.title": "الميزانية العامة للمزرعة",
+    "step1.sub": "المياه المتاحة والعمالة والأسمدة",
+    "step1.waterLabel": "ميزانية المياه",
+    "step1.laborLabel": "ساعات العمل",
+    "step1.fertLabel": "كمية السماد",
+    "step2.title": "قطع الأراضي والمحصول السابق",
+    "step2.sub": "حدد المساحة ونوع التربة والزرعة السابقة لكل أرض",
     "step2.addField": "+ إضافة أرض جديدة",
-    "step3.title": "الخطوة 3: المحاصيل والأسعار بالجنيه المصري (EGP)",
-    "step3.sub": "حدد الإنتاجية المتوقعة، سعر البيع، والتكلفة لكل محصول بالجنيه المصري",
+    "step3.title": "المحاصيل المتاحة والأسعار",
+    "step3.sub": "الإنتاجية المتوقعة، سعر الطن، وتكلفة الزراعة",
     "step3.ecocropDefault": "🌱 استيراد من موسوعة فاو إيكوكروب...",
     "step3.addCrop": "+ إضافة محصول",
     "th.fieldName": "اسم الأرض",
@@ -66,22 +64,25 @@ const i18nData = {
     "th.water": "المياه (م³/هكتار)",
     "th.labor": "العمالة (ساعة)",
     "th.fert": "السماد (كجم)",
-    "th.netProfit": "الربح الصافي (EGP)",
-    "res.title": "نتائج التخطيط وتوزيع المحاصيل على الأرض",
+    "th.netProfit": "الربح المتوقع (EGP)",
+    "res.headerTagline": "التوزيع الموصى به للمواسم القادمة",
+    "res.editInputsBtn": "تعديل البيانات ✏️",
+    "res.printBtn": "طباعة الخطة 🖨️",
+    "res.planMainTitle": "الخطة الزراعية التقديرية للمواسم القادمة",
+    "res.planMainSub": "خطة موزعة على أراضيك بناءً على أعلى ربحية صافية واشتراطات الدورة الزراعية وملاءمة التربة",
     "kpi.profit": "إجمالي الربح الصافي المتوقع",
-    "kpi.profitSub": "الربح الصافي بالجنيه المصري (EGP)",
+    "kpi.profitSub": "صافي الربح التقديري",
     "kpi.revenue": "إجمالي الإيرادات المتوقعة",
     "kpi.revenueSub": "قيمة بيع المحاصيل الإجمالية",
     "kpi.expenses": "إجمالي التكاليف والمصروفات",
-    "kpi.status": "حالة الحل البرمجي",
-    "res.resourceTitle": "نسبة استهلاك ميزانية المزرعة والموارد",
-    "res.rotationTitle": "مصفوفة الدورة الزراعية المصرية لكل أرض (V4)",
-    "res.rotationSub": "تقييم المحصول السابق وتجنب التتابع الضار حسب الجدول الرسمي لـ 53 محصولاً",
-    "res.soilTitle": "مصفوفة ملائمة التربة والأرض للمحاصيل",
-    "res.soilSub": "فحص درجات الحموضة (pH)، الملوحة (EC)، ونوع التربة المناسب",
-    "res.allocTitle": "توزيع الزراعة الأمثل لكل قطعة أرض (هكتار/فدان)",
-    "res.bindingTitle": "محلل القيود المحددة للربح (الموارد المنتهية)",
-    "res.bindingSub": "يحدد المورد الذي استُهلك بنسبة 100% ومنع زيادة الربح",
+    "kpi.status": "حالة التخطيط",
+    "res.resourceTitle": "استهلاك الموارد وميزانية المزرعة",
+    "res.rotationTitle": "مصفوفة الدورة الزراعية لكل أرض (V4)",
+    "res.soilTitle": "مصفوفة ملائمة التربة لكل أرض",
+    "res.allocTitle": "الخطة الزراعية الموصى بها لكل أرض",
+    "res.allocSub": "تحديد المحصول والمساحة المخصصة لكل قطعة أرض لضمان أعلى عائد وتتابع زراعي ممتاز",
+    "res.bindingTitle": "محلل القيود المحددة للربح",
+    "res.detailsAccordion": "عرض التفاصيل الفنية الهندسية ومصفوفات التتابع",
     "modal.fieldName": "اسم قطعة الأرض",
     "modal.fieldArea": "المساحة (هكتار / فدان)",
     "modal.ph": "حموضة التربة (pH)",
@@ -89,11 +90,11 @@ const i18nData = {
     "modal.texture": "نوع التربة",
     "modal.om": "المادة العضوية %",
     "modal.prevCrop": "المحصول السابق (سجل الدورة الزراعية V4)",
-    "modal.ecocropAuto": "🌱 استيراد متطلبات التربة والمياه تلقائياً من موسوعة فاو إيكوكروب",
+    "modal.ecocropAuto": "🌱 استيراد متطلبات التربة والمياه من موسوعة فاو إيكوكروب",
     "modal.cropName": "اسم المحصول",
     "modal.yield": "الإنتاجية المتوقعة (طن/هكتار)",
-    "modal.price": "سعر بيع الطن بالجنيه (EGP/ton)",
-    "modal.cost": "تكلفة الزراعة بالجنيه (EGP/ha)",
+    "modal.price": "سعر بيع الطن (EGP/ton)",
+    "modal.cost": "تكلفة الزراعة (EGP/ha)",
     "modal.water": "احتياج المياه (م³/هكتار)",
     "modal.labor": "احتياج العمالة (ساعة/هكتار)",
     "modal.laborRate": "أجرة ساعة العمل (EGP/ساعة)",
@@ -109,38 +110,36 @@ const i18nData = {
   },
   en: {
     "landing.brandSub": "Smart Agricultural Crop & Rotation Planner",
-    "nav.goOptimizer": "Go to Optimizer 🚀",
+    "nav.goOptimizer": "Input Farm Data 🚀",
     "landing.heroTag": "Tailored for Egyptian Farmers",
-    "landing.heroTitle": "Maximize Your Farm Profits in EGP & Plan Ideal Crop Rotations",
-    "landing.heroSub": "Smart optimization tool that allocates crops to fields to maximize net profit in Egyptian Pounds (EGP), optimizes water and fertilizer, and enforces official rotation rules.",
+    "landing.heroTitle": "Maximize Your Farm Profits & Plan Ideal Crop Rotations",
+    "landing.heroSub": "Smart optimization tool that allocates crops to fields to maximize net profit, optimizes water and fertilizer, and enforces official rotation rules.",
     "landing.startBtn": "Start Farm Planning Now",
     "landing.learnMore": "Learn More Features",
     "features.title": "Why Farmers Trust CropMix?",
-    "features.sub": "Integrated tools designed for Egyptian agriculture to maximize yields and financial returns.",
-    "features.f1Title": "Egyptian Crop Rotation Rules",
-    "features.f1Desc": "Automatically evaluates 53 crop successions to prevent harmful sequences (e.g. Tomato after Potato) and preserve soil fertility.",
-    "features.f2Title": "Water & EGP Profit Optimization",
-    "features.f2Desc": "Calculates production, labor, and fertilizer costs in Egyptian Pounds (EGP) and optimizes land use within water availability limits.",
-    "features.f3Title": "Field Soil Chemistry Suitability",
-    "features.f3Desc": "Matches pH, EC salinity, and soil texture (Clay, Loam, Sandy) to ensure each crop is planted in suitable soil.",
-    "landing.bottomBannerTitle": "Ready to Optimize Your Farm Plan?",
-    "landing.bottomBannerSub": "Input your field measurements and crop parameters to calculate optimal profit in seconds.",
-    "footer.text": "Egyptian Agricultural Crop & Rotation Planner • CropMix Business Planner",
+    "features.sub": "Integrated tools designed for agriculture to maximize yields and financial returns.",
+    "features.f1Title": "Crop Rotation Rules",
+    "features.f1Desc": "Automatically evaluates crop successions to prevent pests and soil degradation.",
+    "features.f2Title": "Water & Profit Optimization",
+    "features.f2Desc": "Calculates production costs and optimizes land use within water availability limits.",
+    "features.f3Title": "Soil Chemistry Compatibility",
+    "features.f3Desc": "Matches pH, EC salinity, and soil texture (Clay, Loam, Sandy) to ensure each crop fits the soil.",
+    "footer.text": "Agricultural Crop & Rotation Planner • CropMix Business Planner",
     "nav.home": "Home",
-    "opt.headerTagline": "Farm Crop & Rotation Calculator",
-    "opt.engineLabel": "Optimizer Engine:",
+    "opt.headerTagline": "Configure Farm & Field Data",
+    "opt.engineLabel": "Engine:",
     "opt.loadPreset": "Load Default Farm",
-    "opt.runOptimize": "Solve Optimal Plan",
-    "step1.title": "Step 1: Global Farm Budgets",
-    "step1.sub": "Set water, labor, and fertilizer availability across your farm",
-    "step1.waterLabel": "Total Water Budget",
-    "step1.laborLabel": "Total Labor Hours",
-    "step1.fertLabel": "Total Fertilizer Budget",
-    "step2.title": "Step 2: Farm Fields & Rotation History",
-    "step2.sub": "Manage field boundaries, soil chemistry, and previous crop planted",
+    "opt.generatePlanBtn": "Generate Farm Allocation Plan 🚀",
+    "step1.title": "Global Farm Budgets",
+    "step1.sub": "Set water, labor, and fertilizer availability",
+    "step1.waterLabel": "Water Budget",
+    "step1.laborLabel": "Labor Hours",
+    "step1.fertLabel": "Fertilizer Budget",
+    "step2.title": "Farm Fields & Rotation History",
+    "step2.sub": "Manage field boundaries, soil chemistry, and previous crop",
     "step2.addField": "+ Add New Field",
-    "step3.title": "Step 3: Crop Catalog & Prices (EGP)",
-    "step3.sub": "Configure expected yield, price, and costs per hectare in EGP",
+    "step3.title": "Crop Catalog & Prices",
+    "step3.sub": "Configure expected yield, market price, and costs per hectare",
     "step3.ecocropDefault": "🌱 Import from FAO EcoCrop DB...",
     "step3.addCrop": "+ Add New Crop",
     "th.fieldName": "Field Name",
@@ -159,28 +158,31 @@ const i18nData = {
     "th.labor": "Labor (h/ha)",
     "th.fert": "Fert. (kg/ha)",
     "th.netProfit": "Net Profit (EGP)",
-    "res.title": "Optimization Results & Field Plan",
+    "res.headerTagline": "Recommended Seasonal Plan",
+    "res.editInputsBtn": "Edit Data ✏️",
+    "res.printBtn": "Print Plan 🖨️",
+    "res.planMainTitle": "Seasonal Farm Allocation Plan",
+    "res.planMainSub": "Optimal allocation across fields based on profit, rotation, and soil match",
     "kpi.profit": "Expected Net Profit",
-    "kpi.profitSub": "Net profit in Egyptian Pounds (EGP)",
+    "kpi.profitSub": "Estimated Net Profit",
     "kpi.revenue": "Expected Gross Revenue",
-    "kpi.revenueSub": "Total expected crop sales",
+    "kpi.revenueSub": "Total crop sales value",
     "kpi.expenses": "Total Expenses & Costs",
-    "kpi.status": "Solver Status",
-    "res.resourceTitle": "Resource Capacity & Budget Utilization",
-    "res.rotationTitle": "Field × Crop Rotation Suitability Matrix (V4)",
-    "res.rotationSub": "Evaluates previous crop succession against 53 Egyptian rotation rules",
-    "res.soilTitle": "Field × Crop Soil Suitability Matrix",
-    "res.soilSub": "Evaluates pH, salinity EC, and texture compatibility",
-    "res.allocTitle": "Optimal Land Allocation by Field (Hectares)",
-    "res.bindingTitle": "Binding Bottleneck Constraints Analyzer",
-    "res.bindingSub": "Identifies resources at 100% capacity restricting profit",
+    "kpi.status": "Planner Status",
+    "res.resourceTitle": "Resource & Budget Utilization",
+    "res.rotationTitle": "Crop Rotation Matrix (V4)",
+    "res.soilTitle": "Soil Suitability Matrix",
+    "res.allocTitle": "Recommended Allocation Plan by Field",
+    "res.allocSub": "Specific crops and hectares assigned to each field for maximum returns",
+    "res.bindingTitle": "Bottleneck Constraints Analyzer",
+    "res.detailsAccordion": "Technical Inspection & Rotation Details",
     "modal.fieldName": "Field Name",
     "modal.fieldArea": "Area (hectares/feddans)",
     "modal.ph": "Soil pH",
     "modal.ec": "Salinity EC (dS/m)",
     "modal.texture": "Soil Texture",
     "modal.om": "Organic Matter %",
-    "modal.prevCrop": "Previous Crop (V4 Rotation History)",
+    "modal.prevCrop": "Previous Crop (V4 History)",
     "modal.ecocropAuto": "🌱 Auto-fill Soil & Water Requirements from FAO EcoCrop DB",
     "modal.cropName": "Crop Name",
     "modal.yield": "Expected Yield (t/ha)",
@@ -257,13 +259,10 @@ function applyLanguage(lang) {
   html.setAttribute("dir", lang === "ar" ? "rtl" : "ltr");
 
   const langToggleText = lang === "ar" ? "English" : "العربية";
-  const landingBtnText = document.getElementById("lang-text-landing");
-  const optBtnText = document.getElementById("lang-text-opt");
+  document.querySelectorAll(".lang-text-btn").forEach((btn) => {
+    btn.textContent = langToggleText;
+  });
 
-  if (landingBtnText) landingBtnText.textContent = langToggleText;
-  if (optBtnText) optBtnText.textContent = langToggleText;
-
-  // Translate data-i18n elements
   const dict = i18nData[lang] || i18nData.ar;
   document.querySelectorAll("[data-i18n]").forEach((elem) => {
     const key = elem.getAttribute("data-i18n");
@@ -292,7 +291,7 @@ function getCropDisplayName(name) {
 
 function initEventListeners() {
   document.getElementById("btn-load-preset").addEventListener("click", loadPresetData);
-  document.getElementById("btn-run-optimize").addEventListener("click", runOptimization);
+  document.getElementById("btn-run-optimize").addEventListener("click", runOptimizationAndShowPlan);
   document.getElementById("btn-add-field").addEventListener("click", () => openFieldModal());
   document.getElementById("btn-add-crop").addEventListener("click", () => openCropModal());
   
@@ -338,11 +337,8 @@ async function loadPresetData() {
     renderFieldsTable();
     renderCropsTable();
     updateTotalLandBadge();
-    
-    runOptimization();
   } catch (err) {
     console.error(err);
-    alert(state.lang === "ar" ? "خطأ في تحميل المزرعة الافتراضية: " + err.message : "Error loading preset farm: " + err.message);
   }
 }
 
@@ -393,7 +389,7 @@ function populateEcoCropDropdowns(species) {
   const headerSelect = document.getElementById("select-ecocrop-import");
   const modalSelect = document.getElementById("m-ecocrop-select");
 
-  const defaultMsg = state.lang === "ar" ? "اختر نوع المحصول من قائمة فاو إيكوكروب..." : "Select FAO EcoCrop Species...";
+  const defaultMsg = state.lang === "ar" ? "اختر المحصول من قائمة فاو..." : "Select FAO EcoCrop Species...";
   const importMsg = state.lang === "ar" ? "🌱 استيراد من موسوعة فاو إيكوكروب..." : "🌱 Import EcoCrop Species...";
 
   let optionsHtml = `<option value="">${defaultMsg}</option>`;
@@ -441,7 +437,6 @@ async function importFromEcoCropHeader(cropName) {
     }
 
     renderCropsTable();
-    runOptimization();
   } catch (err) {
     alert("Error importing EcoCrop species: " + err.message);
   }
@@ -468,11 +463,11 @@ async function autoFillFromEcoCropModal(cropName) {
   }
 }
 
-async function runOptimization() {
+async function runOptimizationAndShowPlan() {
   const version = document.getElementById("optimizer-version").value;
   const statusPill = document.getElementById("status-pill");
   
-  statusPill.textContent = state.lang === "ar" ? "جاري الحساب..." : "Solving LP...";
+  statusPill.textContent = state.lang === "ar" ? "جاري التخطيط..." : "Calculating Plan...";
   statusPill.className = "status-pill";
 
   const payload = {
@@ -500,13 +495,14 @@ async function runOptimization() {
     state.lastResult = result;
     renderResults(result);
 
-    statusPill.textContent = state.lang === "ar" ? `تم الحل (${result.status})` : `Solved (${result.status})`;
+    statusPill.textContent = state.lang === "ar" ? "تم حساب الخطة بنجاح" : `Plan Solved (${result.status})`;
     statusPill.className = "status-pill success";
+
+    // Switch to View 3 (Results Page)
+    navigateTo("optimizer-results");
   } catch (err) {
     console.error(err);
-    statusPill.textContent = state.lang === "ar" ? "خطأ" : "Error";
-    statusPill.className = "status-pill";
-    alert((state.lang === "ar" ? "خطأ في إجراء الحساب: " : "Optimization Error: ") + err.message);
+    alert((state.lang === "ar" ? "خطأ في حساب الخطة: " : "Plan Error: ") + err.message);
   }
 }
 
@@ -530,7 +526,7 @@ function renderFieldsTable() {
       <td>${f.ec.toFixed(1)}</td>
       <td><span class="badge badge-info">${escapeHtml(f.texture)}</span></td>
       <td>${f.organic_matter.toFixed(1)}%</td>
-      <td><span class="badge badge-secondary" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">${escapeHtml(prevCrop)}</span></td>
+      <td><span class="badge badge-secondary">${escapeHtml(prevCrop)}</span></td>
       <td>
         <button class="btn-icon btn-icon-edit" onclick="openFieldModal(${idx})" title="Edit Field">✏️</button>
         <button class="btn-icon" onclick="deleteField(${idx})" title="Delete Field">🗑️</button>
@@ -554,7 +550,6 @@ function renderCropsTable() {
     const laborCost = (c.labor_requirement || 0) * (c.labor_cost_per_hour || 20);
     const fertCost = (c.fertilizer_requirement || 0) * (c.fertilizer_cost_per_kg || 1.5);
     const profit = rev - c.production_cost - laborCost - fertCost;
-
     const cropDisp = getCropDisplayName(c.name);
 
     const tr = document.createElement("tr");
@@ -566,7 +561,7 @@ function renderCropsTable() {
       <td>${c.water_requirement.toLocaleString()}</td>
       <td>${c.labor_requirement || 0}</td>
       <td>${c.fertilizer_requirement || 0}</td>
-      <td style="font-weight:800; color:${profit >= 0 ? '#34d399' : '#f87171'}">${profit.toLocaleString('en-US', {maximumFractionDigits:0})} ${curr}</td>
+      <td style="font-weight:800; color:${profit >= 0 ? '#059669' : '#dc2626'}">${profit.toLocaleString('en-US', {maximumFractionDigits:0})} ${curr}</td>
       <td>
         <button class="btn-icon btn-icon-edit" onclick="openCropModal(${idx})" title="Edit Crop">✏️</button>
         <button class="btn-icon" onclick="deleteCrop(${idx})" title="Delete Crop">🗑️</button>
@@ -589,26 +584,97 @@ function renderResults(res) {
   const curr = getCurrencySymbol();
 
   // KPI Cards
-  document.getElementById("kpi-profit").textContent = `${res.expected_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${curr}`;
-  document.getElementById("kpi-revenue").textContent = `${res.total_expected_revenue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${curr}`;
+  document.getElementById("kpi-profit").textContent = `${res.expected_profit.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})} ${curr}`;
+  document.getElementById("kpi-revenue").textContent = `${res.total_expected_revenue.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})} ${curr}`;
   
   const totalExpenses = res.total_production_cost + res.total_labor_cost + res.total_fertilizer_cost;
-  document.getElementById("kpi-expenses").textContent = `${totalExpenses.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${curr}`;
+  document.getElementById("kpi-expenses").textContent = `${totalExpenses.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})} ${curr}`;
   
-  const prodStr = state.lang === "ar" ? "زراعة" : "Prod";
-  const laborStr = state.lang === "ar" ? "عمالة" : "Labor";
-  const fertStr = state.lang === "ar" ? "أسمدة" : "Fert";
-  document.getElementById("kpi-expenses-sub").textContent = `${prodStr}: ${res.total_production_cost.toFixed(0)} ${curr} | ${laborStr}: ${res.total_labor_cost.toFixed(0)} ${curr} | ${fertStr}: ${res.total_fertilizer_cost.toFixed(0)} ${curr}`;
-  
-  const statusStr = res.is_feasible ? (state.lang === "ar" ? "حل أمثل ممتاز" : "Feasible Optimal") : (state.lang === "ar" ? "غير قابل للحل" : "Infeasible");
+  const statusStr = res.is_feasible ? (state.lang === "ar" ? "خطة ممتازة ومثالية" : "Optimal Plan") : (state.lang === "ar" ? "غير قابل للحل" : "Infeasible");
   document.getElementById("kpi-status").textContent = statusStr;
-  document.getElementById("kpi-solver-name").textContent = `${state.lang === "ar" ? "المحرك" : "Engine"}: ${res.version}`;
 
+  renderSeasonalFieldPlanCards(res);
   renderResourceMeters(res);
   renderSuitabilityMatrix(res);
   renderRotationMatrix(res);
-  renderFieldAllocations(res);
   renderBindingConstraints(res.binding_constraints);
+}
+
+// Render Seasonal Allocation Plan Cards for Farmer
+function renderSeasonalFieldPlanCards(res) {
+  const container = document.getElementById("field-allocations-container");
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (!res.field_allocations) return;
+
+  const curr = getCurrencySymbol();
+  const haUnit = state.lang === "ar" ? "هكتار/فدان" : "ha";
+  const prevLabel = state.lang === "ar" ? "المحصول السابق" : "Previous Crop";
+  const allocTitle = state.lang === "ar" ? "المحصول الموصى بزراعته" : "Recommended Crop";
+  const noCropLabel = state.lang === "ar" ? "أرض بور للموسم القادم" : "Fallow Field Next Season";
+
+  Object.entries(res.field_allocations).forEach(([field_name, allocations]) => {
+    const card = document.createElement("div");
+    card.className = "field-plan-card";
+
+    const fObj = state.fields.find(f => f.name === field_name);
+    const fieldArea = fObj ? fObj.area : (res.field_land_limits ? res.field_land_limits[field_name] : 0);
+    const prevRaw = fObj && fObj.previous_crop ? fObj.previous_crop : "None";
+    const prevDisp = getCropDisplayName(prevRaw);
+
+    let mainCropHtml = "";
+    let allocatedSum = 0;
+
+    Object.entries(allocations).forEach(([crop_name, ha]) => {
+      if (ha > 0.001) {
+        allocatedSum += ha;
+        const cropObj = state.crops.find(c => c.name === crop_name);
+        const profitPerHa = cropObj ? (cropObj.expected_yield * cropObj.price - cropObj.production_cost - (cropObj.labor_requirement||0)*(cropObj.labor_cost_per_hour||20) - (cropObj.fertilizer_requirement||0)*(cropObj.fertilizer_cost_per_kg||1.5)) : 0;
+        const totalProfitContrib = ha * profitPerHa;
+        const cropDisp = getCropDisplayName(crop_name);
+
+        mainCropHtml += `
+          <div class="field-crop-allocation-box">
+            <div style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">${allocTitle}</div>
+            <div class="crop-alloc-name">🌾 ${escapeHtml(cropDisp)}</div>
+            <div class="crop-alloc-ha">المساحة: ${ha.toFixed(1)} ${haUnit} (من أصل ${fieldArea.toFixed(1)})</div>
+            <div class="crop-alloc-profit">+${totalProfitContrib.toLocaleString('en-US', {maximumFractionDigits:0})} ${curr} ربح متوقع</div>
+          </div>
+        `;
+      }
+    });
+
+    if (!mainCropHtml) {
+      mainCropHtml = `
+        <div class="field-crop-allocation-box" style="background:var(--bg-main);">
+          <div class="crop-alloc-name" style="color:var(--text-dim);">😴 ${noCropLabel}</div>
+          <div style="font-size:0.85rem; color:var(--text-muted);">ترك الأرض بدون زراعة لترشيد المياه المتاحة للمزرعة</div>
+        </div>
+      `;
+    }
+
+    // Rotation & Soil Badges
+    const rotationCheck = state.lang === "ar" ? "✅ تتابع ممتازة بالدورة الزراعية" : "✅ Recommended Rotation";
+    const soilCheck = state.lang === "ar" ? "🌱 ملائمة لنوع التربة" : "🌱 Suitable Soil Chemistry";
+
+    card.innerHTML = `
+      <div class="field-plan-header">
+        <span class="field-title-text">📍 ${escapeHtml(field_name)}</span>
+        <span class="field-area-tag">${fieldArea.toFixed(1)} ${haUnit}</span>
+      </div>
+      <div class="field-prev-row">
+        <span>${prevLabel}: <strong>${escapeHtml(prevDisp)}</strong></span>
+      </div>
+      ${mainCropHtml}
+      <div class="field-badges-row">
+        <span class="badge badge-info">${rotationCheck}</span>
+        <span class="badge badge-secondary">${soilCheck}</span>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
 }
 
 function renderResourceMeters(res) {
@@ -623,7 +689,7 @@ function renderResourceMeters(res) {
   const resources = [
     { name: state.lang === "ar" ? "مساحة الأرض" : "Land Area", used: res.total_land_used, limit: res.field_area_limit, unit: haUnit },
     { name: state.lang === "ar" ? "ميزانية المياه" : "Water Budget", used: res.total_water_used, limit: res.water_budget_limit, unit: "m³" },
-    { name: state.lang === "ar" ? "ساعات العمالة" : "Labor Budget", used: res.total_labor_used, limit: res.labor_budget_limit, unit: hrsUnit },
+    { name: state.lang === "ar" ? "ساعات العمالة" : "Labor Hours", used: res.total_labor_used, limit: res.labor_budget_limit, unit: hrsUnit },
     { name: state.lang === "ar" ? "كمية السماد" : "Fertilizer Budget", used: res.total_fertilizer_used, limit: res.fertilizer_budget_limit, unit: kgUnit },
   ];
 
@@ -636,7 +702,7 @@ function renderResourceMeters(res) {
     else if (pct >= 85) barClass = "warning";
 
     const usedLabel = state.lang === "ar" ? "المستهلك" : "Used";
-    const capLabel = state.lang === "ar" ? "السعة القصوى" : "Capacity";
+    const capLabel = state.lang === "ar" ? "المتاح" : "Capacity";
 
     const box = document.createElement("div");
     box.className = "meter-box";
@@ -689,9 +755,9 @@ function renderSuitabilityMatrix(res) {
       const item = matrix[`${f}__${c}`];
       if (item) {
         if (item.suitable) {
-          html += `<td class="matrix-cell-suitable" title="Suitable for planting">${okText}</td>`;
+          html += `<td class="matrix-cell-suitable">${okText}</td>`;
         } else {
-          html += `<td class="matrix-cell-unsuitable" title="${escapeHtml(item.reason)}">${noText}<br><span style="font-size:0.7rem; opacity:0.8">${escapeHtml(item.reason)}</span></td>`;
+          html += `<td class="matrix-cell-unsuitable" title="${escapeHtml(item.reason)}">${noText}</td>`;
         }
       } else {
         html += `<td>-</td>`;
@@ -723,8 +789,8 @@ function renderRotationMatrix(res) {
   });
 
   const headerLabel = state.lang === "ar" ? "الأرض (المحصول السابق) \\ المحصول" : "Field (Prev Crop) \\ Crop";
-  const okText = state.lang === "ar" ? "✅ تتابع ممتازة" : "✅ Suitable";
-  const noText = state.lang === "ar" ? "❌ غير مسموح بالدورة" : "❌ Disallowed";
+  const okText = state.lang === "ar" ? "✅ مسموح" : "✅ Suitable";
+  const noText = state.lang === "ar" ? "❌ غير مسموح" : "❌ Disallowed";
 
   let html = `<thead><tr><th>${headerLabel}</th>`;
   crops.forEach(c => html += `<th>${escapeHtml(getCropDisplayName(c))}</th>`);
@@ -743,7 +809,7 @@ function renderRotationMatrix(res) {
         if (item.suitable) {
           html += `<td class="matrix-cell-suitable" title="${escapeHtml(item.reason)}">${okText}</td>`;
         } else {
-          html += `<td class="matrix-cell-unsuitable" title="${escapeHtml(item.reason)}">${noText}<br><span style="font-size:0.7rem; opacity:0.8">${escapeHtml(item.reason)}</span></td>`;
+          html += `<td class="matrix-cell-unsuitable" title="${escapeHtml(item.reason)}">${noText}</td>`;
         }
       } else {
         html += `<td>-</td>`;
@@ -754,60 +820,6 @@ function renderRotationMatrix(res) {
   html += "</tbody>";
 
   if (table) table.innerHTML = html;
-}
-
-function renderFieldAllocations(res) {
-  const container = document.getElementById("field-allocations-container");
-  if (!container) return;
-  container.innerHTML = "";
-
-  if (!res.field_allocations) return;
-
-  const curr = getCurrencySymbol();
-  const haUnit = state.lang === "ar" ? "هكتار/فدان" : "ha";
-  const usedLabel = state.lang === "ar" ? "المستغل" : "Used";
-  const noCropLabel = state.lang === "ar" ? "* لم تُخصص هذه الأرض لأي محصول." : "* No crops allocated to this field.";
-
-  Object.entries(res.field_allocations).forEach(([field_name, allocations]) => {
-    const card = document.createElement("div");
-    card.className = "field-alloc-card";
-
-    let usedHa = 0;
-    let itemsHtml = "";
-
-    Object.entries(allocations).forEach(([crop_name, ha]) => {
-      if (ha > 0) {
-        usedHa += ha;
-        const cropObj = state.crops.find(c => c.name === crop_name);
-        const profitPerHa = cropObj ? (cropObj.expected_yield * cropObj.price - cropObj.production_cost - (cropObj.labor_requirement||0)*(cropObj.labor_cost_per_hour||20) - (cropObj.fertilizer_requirement||0)*(cropObj.fertilizer_cost_per_kg||1.5)) : 0;
-        const profitContrib = ha * profitPerHa;
-        const cropDisp = getCropDisplayName(crop_name);
-
-        itemsHtml += `
-          <div class="crop-alloc-item">
-            <span>🌾 <strong>${escapeHtml(cropDisp)}</strong></span>
-            <span>${ha.toFixed(2)} ${haUnit} &nbsp; (<span style="color:#34d399">+${profitContrib.toLocaleString('en-US', {maximumFractionDigits:0})} ${curr}</span>)</span>
-          </div>
-        `;
-      }
-    });
-
-    if (!itemsHtml) {
-      itemsHtml = `<div class="crop-alloc-item" style="color:var(--text-dim)">${noCropLabel}</div>`;
-    }
-
-    const fieldLimit = res.field_land_limits ? res.field_land_limits[field_name] : (state.fields.find(f => f.name === field_name)?.area || 0);
-
-    card.innerHTML = `
-      <div class="field-alloc-header">
-        <span>📍 ${escapeHtml(field_name)}</span>
-        <span style="color:var(--text-muted)">${usedLabel}: ${usedHa.toFixed(1)} / ${fieldLimit.toFixed(1)} ${haUnit}</span>
-      </div>
-      ${itemsHtml}
-    `;
-
-    container.appendChild(card);
-  });
 }
 
 function renderBindingConstraints(constraints) {
@@ -821,7 +833,7 @@ function renderBindingConstraints(constraints) {
 
   constraints.forEach((c) => {
     const isBinding = c.is_binding;
-    const tagText = isBinding ? (state.lang === "ar" ? "⚠️ ممر خانق (قيد منتهي)" : "⚠️ Bottleneck Constraint") : (state.lang === "ar" ? "✅ كافٍ ومتاح" : "✅ Sufficient");
+    const tagText = isBinding ? (state.lang === "ar" ? "⚠️ قيد منتهي بالكامل" : "⚠️ Bottleneck") : (state.lang === "ar" ? "✅ كافٍ ومتاح" : "✅ Sufficient");
 
     const item = document.createElement("div");
     item.className = `binding-item ${isBinding ? 'is-binding' : ''}`;
@@ -976,7 +988,7 @@ function saveCropModal() {
   const suitableTextures = texturesStr.split(",").map(s => s.trim()).filter(Boolean);
 
   if (!name || yieldVal <= 0 || price <= 0) {
-    alert(state.lang === "ar" ? "يرجى إدخال اسم المحصول، الإنتاجية، وسعر السوق بالجنيه بشكل صحيح." : "Please enter a valid crop name, yield, and market price in EGP.");
+    alert(state.lang === "ar" ? "يرجى إدخال اسم المحصول، الإنتاجية، وسعر السوق بشكل صحيح." : "Please enter a valid crop name, yield, and market price.");
     return;
   }
 
