@@ -1,4 +1,4 @@
-"""Data structures and example dataset for Crop Mix Optimization (V1, V2, and V3)."""
+"""Data structures and example dataset for Crop Mix Optimization (V1, V2, V3, and V4)."""
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
@@ -7,7 +7,7 @@ import pandas as pd
 
 @dataclass
 class CropSoilRequirement:
-    """Soil suitability requirements for a crop (V3)."""
+    """Soil suitability requirements for a crop (V3/V4)."""
 
     min_ph: float  # Minimum acceptable soil pH
     max_ph: float  # Maximum acceptable soil pH
@@ -17,7 +17,7 @@ class CropSoilRequirement:
 
 @dataclass
 class FieldParameters:
-    """Parameters and soil measurements for an individual farm field (V3)."""
+    """Parameters and soil measurements for an individual farm field (V3/V4)."""
 
     name: str
     area: float  # Field area in hectares
@@ -25,6 +25,7 @@ class FieldParameters:
     ec: float  # Electrical conductivity (dS/m)
     texture: str  # Soil texture class (e.g. 'Loam', 'Clay', 'Sandy')
     organic_matter: float  # Soil organic matter percentage (%) - stored metadata
+    previous_crop: Optional[str] = None  # Historical crop planted in prior season (V4)
 
 
 @dataclass
@@ -81,7 +82,7 @@ class FarmInputs:
     labor_budget: float = float("inf")  # Total available labor budget (hours)
     fertilizer_budget: float = float("inf")  # Total available fertilizer budget (kg)
     crops: Dict[str, CropParameters] = field(default_factory=dict)
-    fields: Dict[str, FieldParameters] = field(default_factory=dict)  # V3 fields
+    fields: Dict[str, FieldParameters] = field(default_factory=dict)  # V3/V4 fields
 
     def to_dataframe(self) -> pd.DataFrame:
         """Convert crops data to a Pandas DataFrame."""
@@ -105,7 +106,7 @@ class FarmInputs:
         return pd.DataFrame(records).set_index("crop")
 
     def fields_to_dataframe(self) -> pd.DataFrame:
-        """Convert field data to a Pandas DataFrame (V3)."""
+        """Convert field data to a Pandas DataFrame (V3/V4)."""
         records = []
         for name, field_obj in self.fields.items():
             records.append(
@@ -116,16 +117,17 @@ class FarmInputs:
                     "ec_ds_m": field_obj.ec,
                     "texture": field_obj.texture,
                     "organic_matter_pct": field_obj.organic_matter,
+                    "previous_crop": field_obj.previous_crop,
                 }
             )
         return pd.DataFrame(records).set_index("field")
 
 
 def get_example_farm_data() -> FarmInputs:
-    """Return an example dataset with synthetic TEST/DEMO values for V1, V2 & V3 optimization testing.
+    """Return an example dataset with synthetic TEST/DEMO values aligned with the source-of-truth rotation matrix.
 
-    NOTE: All labor, fertilizer, field soil measurements, and crop soil requirements below are synthetic
-    TEST/DEMO values, not real agricultural recommendations.
+    NOTE: All crop names below ('Wheat', 'Yellow Corn', 'Soybean', 'Tomato', 'Cotton') match the Excel rotation matrix.
+    All labor, fertilizer, field soil measurements, and previous crops are synthetic TEST/DEMO values.
     """
     crops = {
         "Wheat": CropParameters(
@@ -145,8 +147,8 @@ def get_example_farm_data() -> FarmInputs:
                 suitable_textures=["Loam", "Clay", "Silt"],
             ),
         ),
-        "Corn": CropParameters(
-            name="Corn",
+        "Yellow Corn": CropParameters(
+            name="Yellow Corn",
             expected_yield=9.0,
             price=190.0,
             production_cost=900.0,
@@ -162,8 +164,8 @@ def get_example_farm_data() -> FarmInputs:
                 suitable_textures=["Loam", "Sandy Loam", "Clay"],
             ),
         ),
-        "Soybeans": CropParameters(
-            name="Soybeans",
+        "Soybean": CropParameters(
+            name="Soybean",
             expected_yield=3.0,
             price=450.0,
             production_cost=650.0,
@@ -179,8 +181,8 @@ def get_example_farm_data() -> FarmInputs:
                 suitable_textures=["Loam", "Silt", "Sandy"],
             ),
         ),
-        "Tomatoes": CropParameters(
-            name="Tomatoes",
+        "Tomato": CropParameters(
+            name="Tomato",
             expected_yield=35.0,
             price=120.0,
             production_cost=2500.0,
@@ -215,36 +217,39 @@ def get_example_farm_data() -> FarmInputs:
         ),
     }
 
-    # Synthetic TEST/DEMO fields with varied soil characteristics
+    # Synthetic TEST/DEMO fields with previous crop historical data for V4 testing
     fields = {
         "Field_North": FieldParameters(
             name="Field_North",
             area=40.0,
             ph=6.8,  # Ideal pH for most crops
             ec=1.2,  # Low salinity
-            texture="Loam",  # Suitable for all crops
+            texture="Loam",
             organic_matter=2.5,
+            previous_crop="Wheat",  # Historical previous crop
         ),
         "Field_South": FieldParameters(
             name="Field_South",
             area=35.0,
             ph=7.8,  # Slightly alkaline
-            ec=3.5,  # Higher salinity (restricts sensitive crops like Tomatoes & Corn)
-            texture="Clay",  # Restricts Tomatoes and Soybeans
+            ec=3.5,  # Higher salinity
+            texture="Clay",
             organic_matter=1.8,
+            previous_crop="Soybean",  # Historical previous crop
         ),
         "Field_East": FieldParameters(
             name="Field_East",
             area=25.0,
-            ph=5.5,  # Acidic (restricts Wheat, Corn, Soybeans, Tomatoes; suitable for Cotton)
-            ec=0.8,  # Low salinity
-            texture="Sandy",  # Restricts Wheat
+            ph=5.5,  # Acidic
+            ec=0.8,
+            texture="Sandy",
             organic_matter=1.2,
+            previous_crop=None,  # No previous crop history (fallow / new field)
         ),
     }
 
     return FarmInputs(
-        field_area=100.0,  # Total sum of field areas (40 + 35 + 25 = 100)
+        field_area=100.0,
         water_budget=400000.0,
         labor_budget=2500.0,
         fertilizer_budget=15000.0,
