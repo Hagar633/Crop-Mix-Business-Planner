@@ -564,7 +564,25 @@ def run_optimization(req: OptimizationRequestSchema):
         }
 
 
+from fastapi.responses import FileResponse
+
 # --- Serve Static UI Files ---
 static_dir = Path(__file__).resolve().parent / "static"
+
+@app.get("/styles.css")
+def serve_styles_css():
+    css_file = static_dir / "styles.css"
+    if css_file.exists():
+        return FileResponse(css_file, media_type="text/css")
+    raise HTTPException(status_code=404, detail="styles.css not found")
+
+@app.get("/app.js")
+def serve_app_js():
+    js_file = static_dir / "app.js"
+    if js_file.exists():
+        return FileResponse(js_file, media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="app.js not found")
+
 if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static_files")
     app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
