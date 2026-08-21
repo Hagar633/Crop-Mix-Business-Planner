@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CropMix Business Planner - Smart Farm Land Optimizer</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">🌾</div>
+        <div>
+          <h1>CropMix <span class="brand-badge">Planner AI</span></h1>
+          <p class="brand-tagline">Field-Level Land Allocation & Financial Optimization System</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="version-select-group">
+          <label for="optimizer-version">Optimization Engine:</label>
+          <select id="optimizer-version" class="select-input">
+            <option value="v3" selected>V3 - Field Soil Suitability (Spatial LP)</option>
+            <option value="v2">V2 - Farm Aggregate (Labor & Fertilizer LP)</option>
+            <option value="v1">V1 - Farm Aggregate Basic (Land & Water LP)</option>
+          </select>
+        </div>
+
+        <button id="btn-load-preset" class="btn btn-secondary">
+          <span>🔄</span> Load Default Farm
+        </button>
+
+        <button id="btn-run-optimize" class="btn btn-primary btn-glow">
+          <span>🚀</span> Solve Optimal Crop Mix
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+
+    <!-- Global Farm Budget Toolbar -->
+    <section class="card budget-card">
+      <div class="card-header">
+        <h2>⚡ Global Farm Resource Budgets</h2>
+        <span class="badge badge-info" id="total-land-badge">Total Land: 100.0 ha</span>
+      </div>
+      <div class="budget-grid">
+        <div class="input-group">
+          <label for="budget-water">
+            <span>💧 Total Water Budget</span>
+            <span class="unit">(m³)</span>
+          </label>
+          <input type="number" id="budget-water" value="400000" min="0" step="5000">
+        </div>
+
+        <div class="input-group">
+          <label for="budget-labor">
+            <span>👷 Total Labor Budget</span>
+            <span class="unit">(hours)</span>
+          </label>
+          <input type="number" id="budget-labor" value="2500" min="0" step="50">
+        </div>
+
+        <div class="input-group">
+          <label for="budget-fertilizer">
+            <span>🧪 Total Fertilizer Budget</span>
+            <span class="unit">(kg)</span>
+          </label>
+          <input type="number" id="budget-fertilizer" value="15000" min="0" step="500">
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Config: Fields & Crops -->
+    <div class="config-grid">
+
+      <!-- Fields Management Panel -->
+      <section class="card panel-card">
+        <div class="panel-header">
+          <div>
+            <h3>🏔️ Farm Fields & Soil Measurements</h3>
+            <p class="panel-sub">Manage physical field boundaries and soil chemistry (pH, EC, Texture)</p>
+          </div>
+          <button id="btn-add-field" class="btn btn-sm btn-outline">+ Add Field</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table" id="table-fields">
+            <thead>
+              <tr>
+                <th>Field Name</th>
+                <th>Area (ha)</th>
+                <th>pH</th>
+                <th>EC (dS/m)</th>
+                <th>Soil Texture</th>
+                <th>Org. Matter %</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="fields-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Crops Management Panel -->
+      <section class="card panel-card">
+        <div class="panel-header">
+          <div>
+            <h3>🌽 Crop Catalog & Economic Parameters</h3>
+            <p class="panel-sub">Configure yield expectations, prices, costs, and soil tolerance rules</p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <select id="select-ecocrop-import" class="select-input" style="padding: 4px 8px; font-size: 13px;">
+              <option value="">🌱 Import EcoCrop Species...</option>
+            </select>
+            <button id="btn-add-crop" class="btn btn-sm btn-outline">+ Add Crop</button>
+          </div>
+        </div>
+
+
+        <div class="table-wrapper">
+          <table class="data-table" id="table-crops">
+            <thead>
+              <tr>
+                <th>Crop</th>
+                <th>Yield (t/ha)</th>
+                <th>Price ($/t)</th>
+                <th>Cost ($/ha)</th>
+                <th>Water (m³/ha)</th>
+                <th>Labor (h/ha)</th>
+                <th>Fert. (kg/ha)</th>
+                <th>Net Profit/ha</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="crops-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Optimization Results Dashboard -->
+    <section class="results-section" id="results-section">
+
+      <div class="section-title-row">
+        <h2>📊 Optimization Results & Allocation Plan</h2>
+        <span class="status-pill" id="status-pill">Ready to Run</span>
+      </div>
+
+      <!-- Financial KPI Summary Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card profit-card">
+          <div class="kpi-icon">💰</div>
+          <div class="kpi-content">
+            <span class="kpi-label">Expected Net Profit</span>
+            <div class="kpi-value" id="kpi-profit">$0.00</div>
+            <span class="kpi-sub" id="kpi-profit-sub">Maximize Net Profit Objective</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon">📈</div>
+          <div class="kpi-content">
+            <span class="kpi-label">Gross Revenue</span>
+            <div class="kpi-value" id="kpi-revenue">$0.00</div>
+            <span class="kpi-sub">Total Expected Crop Sales</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon">📉</div>
+          <div class="kpi-content">
+            <span class="kpi-label">Total Expenses</span>
+            <div class="kpi-value" id="kpi-expenses">$0.00</div>
+            <span class="kpi-sub" id="kpi-expenses-sub">Production + Labor + Fertilizer</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon">⚙️</div>
+          <div class="kpi-content">
+            <span class="kpi-label">Solver Status</span>
+            <div class="kpi-value" id="kpi-status">Optimal</div>
+            <span class="kpi-sub" id="kpi-solver-name">Engine: Pyomo + HiGHS</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resource Capacity Utilization Progress Meters -->
+      <div class="card resource-card">
+        <h3>📊 Resource Capacity & Budget Utilization</h3>
+        <div class="resource-meters-grid" id="resource-meters-container">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Soil Suitability Matrix Grid (V3) -->
+      <div class="card suitability-card" id="suitability-card">
+        <div class="card-header">
+          <div>
+            <h3>🌱 Field × Crop Soil Suitability Matrix</h3>
+            <p class="panel-sub">Rule-based agronomic screening (pH tolerance, EC salinity max, texture match)</p>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="matrix-table" id="matrix-table">
+            <!-- Dynamically populated matrix -->
+          </table>
+        </div>
+      </div>
+
+      <!-- Optimal Crop Allocation Breakdown -->
+      <div class="allocation-grid">
+        <!-- Allocation by Field -->
+        <div class="card">
+          <h3>📍 Optimal Allocation by Field (Hectares)</h3>
+          <div id="field-allocations-container" class="field-alloc-list">
+            <!-- Dynamically populated cards -->
+          </div>
+        </div>
+
+        <!-- Binding Constraints & Bottlenecks -->
+        <div class="card">
+          <h3>🔍 Binding Constraint Analyzer</h3>
+          <p class="panel-sub">Identifies resources that reached 100% capacity and restricted profit</p>
+          <div id="binding-constraints-container" class="binding-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Edit Field Modal -->
+  <div class="modal-backdrop" id="field-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="field-modal-title">Edit Field</h3>
+        <button class="modal-close" onclick="closeFieldModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="field-edit-idx">
+        <div class="form-group">
+          <label>Field Name</label>
+          <input type="text" id="m-field-name">
+        </div>
+        <div class="form-group">
+          <label>Area (hectares)</label>
+          <input type="number" id="m-field-area" step="0.1" min="0.1">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Soil pH (0 - 14)</label>
+            <input type="number" id="m-field-ph" step="0.1" min="0" max="14">
+          </div>
+          <div class="form-group">
+            <label>Salinity EC (dS/m)</label>
+            <input type="number" id="m-field-ec" step="0.1" min="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Soil Texture</label>
+            <select id="m-field-texture" class="select-input">
+              <option value="Loam">Loam</option>
+              <option value="Clay">Clay</option>
+              <option value="Sandy">Sandy</option>
+              <option value="Silt">Silt</option>
+              <option value="Sandy Loam">Sandy Loam</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Organic Matter %</label>
+            <input type="number" id="m-field-om" step="0.1" min="0">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeFieldModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveFieldModal()">Save Field</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Crop Modal -->
+  <div class="modal-backdrop" id="crop-modal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="crop-modal-title">Edit Crop Parameters</h3>
+        <button class="modal-close" onclick="closeCropModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="crop-edit-idx">
+        <div class="form-group" style="background: rgba(16, 185, 129, 0.08); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(16, 185, 129, 0.2);">
+          <label style="color: #10b981; font-weight: 600;">🌱 Auto-fill Soil & Water Parameters from FAO EcoCrop DB</label>
+          <select id="m-ecocrop-select" class="select-input" onchange="autoFillFromEcoCropModal(this.value)">
+            <option value="">Select FAO EcoCrop Species to Auto-Fill...</option>
+          </select>
+        </div>
+        <div class="form-row">
+
+          <div class="form-group">
+            <label>Crop Name</label>
+            <input type="text" id="m-crop-name">
+          </div>
+          <div class="form-group">
+            <label>Expected Yield (t/ha)</label>
+            <input type="number" id="m-crop-yield" step="0.1" min="0.1">
+          </div>
+          <div class="form-group">
+            <label>Market Price ($/ton)</label>
+            <input type="number" id="m-crop-price" step="1" min="0">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Base Prod Cost ($/ha)</label>
+            <input type="number" id="m-crop-cost" step="10" min="0">
+          </div>
+          <div class="form-group">
+            <label>Water Req (m³/ha)</label>
+            <input type="number" id="m-crop-water" step="100" min="0">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Labor Req (hours/ha)</label>
+            <input type="number" id="m-crop-labor" step="1" min="0">
+          </div>
+          <div class="form-group">
+            <label>Labor Cost ($/hour)</label>
+            <input type="number" id="m-crop-labor-rate" step="1" min="0">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fertilizer Req (kg/ha)</label>
+            <input type="number" id="m-crop-fert" step="5" min="0">
+          </div>
+          <div class="form-group">
+            <label>Fertilizer Cost ($/kg)</label>
+            <input type="number" id="m-crop-fert-rate" step="0.1" min="0">
+          </div>
+        </div>
+
+        <h4 class="modal-subtitle">Soil Suitability Thresholds (V3)</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Min Tolerable pH</label>
+            <input type="number" id="m-crop-min-ph" step="0.1" min="0" max="14">
+          </div>
+          <div class="form-group">
+            <label>Max Tolerable pH</label>
+            <input type="number" id="m-crop-max-ph" step="0.1" min="0" max="14">
+          </div>
+          <div class="form-group">
+            <label>Max Tolerable EC (dS/m)</label>
+            <input type="number" id="m-crop-max-ec" step="0.1" min="0">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Suitable Soil Textures (comma separated)</label>
+          <input type="text" id="m-crop-textures" placeholder="e.g. Loam, Clay, Silt">
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeCropModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveCropModal()">Save Crop</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <p>CropMix Business Planner • Powered by Pyomo & HiGHS Continuous Linear Programming Solver</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
