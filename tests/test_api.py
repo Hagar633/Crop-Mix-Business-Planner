@@ -136,3 +136,22 @@ def test_optimize_validation_errors():
     }
     response = client.post("/api/optimize", json=payload)
     assert response.status_code == 400
+
+
+def test_water_zones_endpoint():
+    response = client.get("/api/water/zones")
+    assert response.status_code == 200
+    data = response.json()
+    assert "zones" in data
+    assert "seasons" in data
+    assert "Delta" in data["zones"]
+    assert "Winter" in data["seasons"]
+
+
+def test_water_lookup_endpoint():
+    response = client.get("/api/water/lookup/Wheat?zone=Upper%20Egypt&season=Winter")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["crop"] == "Wheat"
+    assert data["water_requirement"] > 0
+

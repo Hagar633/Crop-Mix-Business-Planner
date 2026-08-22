@@ -206,6 +206,30 @@
             <input type="number" id="budget-fertilizer" value="15000" min="0" step="500">
           </div>
         </div>
+        <div class="budget-grid" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0, 0, 0, 0.1);">
+          <div class="input-group">
+            <label for="farm-zone">
+              <span>📍 <span data-i18n="step1.zoneLabel">المنطقة في مصر</span></span>
+            </label>
+            <select id="farm-zone" class="select-input">
+              <option value="Delta" selected data-i18n="zone.delta">الدلتا (Delta)</option>
+              <option value="Middle Egypt" data-i18n="zone.middle">مصر الوسطى (Middle Egypt)</option>
+              <option value="Upper Egypt" data-i18n="zone.upper">مصر العليا (Upper Egypt)</option>
+              <option value="Sinai / Reclaimed Lands" data-i18n="zone.sinai">سيناء والأراضي الصحراوية (Sinai / Reclaimed)</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="farm-season">
+              <span>🗓️ <span data-i18n="step1.seasonLabel">الموسم الزراعي</span></span>
+            </label>
+            <select id="farm-season" class="select-input">
+              <option value="Winter" selected data-i18n="season.winter">شتوي (Winter)</option>
+              <option value="Summer" data-i18n="season.summer">صيفي (Summer)</option>
+              <option value="Nili" data-i18n="season.nili">نيلي (Nili)</option>
+              <option value="Perennial" data-i18n="season.perennial">معمر / طوال العام (Perennial)</option>
+            </select>
+          </div>
+        </div>
       </section>
 
       <!-- STEP 2: FIELDS MANAGEMENT -->

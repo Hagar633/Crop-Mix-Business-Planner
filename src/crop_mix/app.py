@@ -26,9 +26,11 @@ from crop_mix.models.optimizer_v2 import CropMixOptimizerV2
 from crop_mix.models.optimizer_v3 import CropMixOptimizerV3
 from crop_mix.models.optimizer_v4 import CropMixOptimizerV4
 from crop_mix.data.rotation_loader import RotationMatrixLoader
+from crop_mix.data.water_loader import EgyptWaterDataLoader
 
 ecocrop_db = EcoCropDatabase()
 rotation_loader = RotationMatrixLoader()
+water_loader = EgyptWaterDataLoader()
 
 
 app = FastAPI(
@@ -81,6 +83,8 @@ class FieldSchema(BaseModel):
 
 class OptimizationRequestSchema(BaseModel):
     version: str = Field("v4", description="Optimizer version: 'v1', 'v2', 'v3', or 'v4'")
+    zone: str = Field("Delta", description="Egyptian region: Delta, Middle Egypt, Upper Egypt, Sinai / Reclaimed Lands")
+    season: str = Field("Winter", description="Agricultural season: Winter, Summer, Nili, Perennial")
     water_budget: float = Field(..., ge=0, description="Available water budget in m^3")
     labor_budget: float = Field(2500.0, ge=0, description="Available labor budget in hours")
     fertilizer_budget: float = Field(15000.0, ge=0, description="Available fertilizer budget in kg")
@@ -103,12 +107,16 @@ def build_farm_inputs(req: OptimizationRequestSchema) -> FarmInputs:
                 suitable_textures=c.soil_requirement.suitable_textures,
             )
 
+        water_req = c.water_requirement
+        if water_req <= 0:
+            water_req = water_loader.get_water_requirement(c.name, zone=req.zone, season=req.season)
+
         crops_dict[c.name] = CropParameters(
             name=c.name,
             expected_yield=c.expected_yield,
             price=c.price,
             production_cost=c.production_cost,
-            water_requirement=c.water_requirement,
+            water_requirement=water_req,
             labor_requirement=c.labor_requirement,
             labor_cost_per_hour=c.labor_cost_per_hour,
             fertilizer_requirement=c.fertilizer_requirement,
@@ -367,6 +375,27 @@ def get_rotation_matrix_info():
         "crops": crops,
         "perennial_map": rotation_loader.perennial_map,
         "family_map": rotation_loader.family_map,
+    }
+
+
+@app.get("/api/water/zones")
+def get_water_zones():
+    """Return available Egyptian agricultural zones and seasons."""
+    return {
+        "zones": water_loader.VALID_ZONES,
+        "seasons": water_loader.VALID_SEASONS,
+    }
+
+
+@app.get("/api/water/lookup/{crop_name}")
+def get_crop_water_requirement(crop_name: str, zone: str = "Delta", season: str = "Winter"):
+    """Lookup water requirement (m^3/ha) for a crop in a specific zone and season."""
+    req_m3_ha = water_loader.get_water_requirement(crop_name, zone=zone, season=season)
+    return {
+        "crop": crop_name,
+        "zone": zone,
+        "season": season,
+        "water_requirement": req_m3_ha,
     }
 
 

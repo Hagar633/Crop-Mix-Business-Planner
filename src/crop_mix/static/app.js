@@ -6,6 +6,8 @@ const state = {
   water_budget: 400000,
   labor_budget: 2500,
   fertilizer_budget: 15000,
+  zone: "Delta",
+  season: "Winter",
   fields: [],
   crops: [],
   ecocropSpecies: [],
@@ -42,6 +44,16 @@ const i18nData = {
     "step1.waterLabel": "ميزانية المياه",
     "step1.laborLabel": "ساعات العمل",
     "step1.fertLabel": "كمية السماد",
+    "step1.zoneLabel": "المنطقة في مصر",
+    "step1.seasonLabel": "الموسم الزراعي",
+    "zone.delta": "الدلتا (Delta)",
+    "zone.middle": "مصر الوسطى (Middle Egypt)",
+    "zone.upper": "مصر العليا (Upper Egypt)",
+    "zone.sinai": "سيناء والأراضي الصحراوية (Sinai / Reclaimed)",
+    "season.winter": "شتوي (Winter)",
+    "season.summer": "صيفي (Summer)",
+    "season.nili": "نيلي (Nili)",
+    "season.perennial": "معمر / طوال العام (Perennial)",
     "step2.title": "قطع الأراضي والمحصول السابق",
     "step2.sub": "حدد المساحة ونوع التربة والزرعة السابقة لكل أرض",
     "step2.addField": "+ إضافة أرض جديدة",
@@ -135,6 +147,16 @@ const i18nData = {
     "step1.waterLabel": "Water Budget",
     "step1.laborLabel": "Labor Hours",
     "step1.fertLabel": "Fertilizer Budget",
+    "step1.zoneLabel": "Region in Egypt",
+    "step1.seasonLabel": "Agricultural Season",
+    "zone.delta": "Delta",
+    "zone.middle": "Middle Egypt",
+    "zone.upper": "Upper Egypt",
+    "zone.sinai": "Sinai & Reclaimed Lands",
+    "season.winter": "Winter",
+    "season.summer": "Summer",
+    "season.nili": "Nili",
+    "season.perennial": "Perennial",
     "step2.title": "Farm Fields & Rotation History",
     "step2.sub": "Manage field boundaries, soil chemistry, and previous crop",
     "step2.addField": "+ Add New Field",
@@ -305,6 +327,22 @@ function initEventListeners() {
     });
   }
 
+  const zoneElem = document.getElementById("farm-zone");
+  if (zoneElem) {
+    zoneElem.addEventListener("change", (e) => {
+      state.zone = e.target.value;
+      updateCropsWaterRequirements();
+    });
+  }
+
+  const seasonElem = document.getElementById("farm-season");
+  if (seasonElem) {
+    seasonElem.addEventListener("change", (e) => {
+      state.season = e.target.value;
+      updateCropsWaterRequirements();
+    });
+  }
+
   document.getElementById("budget-water").addEventListener("change", (e) => {
     state.water_budget = parseFloat(e.target.value) || 0;
   });
@@ -314,6 +352,23 @@ function initEventListeners() {
   document.getElementById("budget-fertilizer").addEventListener("change", (e) => {
     state.fertilizer_budget = parseFloat(e.target.value) || 0;
   });
+}
+
+async function updateCropsWaterRequirements() {
+  for (let c of state.crops) {
+    try {
+      const res = await fetch(`/api/water/lookup/${encodeURIComponent(c.name)}?zone=${encodeURIComponent(state.zone)}&season=${encodeURIComponent(state.season)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.water_requirement && data.water_requirement > 0) {
+          c.water_requirement = data.water_requirement;
+        }
+      }
+    } catch (err) {
+      console.error(`Failed to update water requirement for ${c.name}:`, err);
+    }
+  }
+  renderCropsTable();
 }
 
 // --- API Calls ---
@@ -411,13 +466,26 @@ async function importFromEcoCropHeader(cropName) {
     if (!res.ok) throw new Error(`EcoCrop species '${cropName}' not found.`);
     const item = await res.json();
 
+    let waterReq = item.water_requirement || 4000.0;
+    try {
+      const wRes = await fetch(`/api/water/lookup/${encodeURIComponent(item.name)}?zone=${encodeURIComponent(state.zone)}&season=${encodeURIComponent(state.season)}`);
+      if (wRes.ok) {
+        const wData = await wRes.json();
+        if (wData.water_requirement && wData.water_requirement > 0) {
+          waterReq = wData.water_requirement;
+        }
+      }
+    } catch (e) {
+      console.error("Water lookup error:", e);
+    }
+
     const existingIdx = state.crops.findIndex(c => c.name.toLowerCase() === item.name.toLowerCase());
     const cropData = {
       name: item.name,
       expected_yield: item.default_expected_yield || 5.0,
       price: item.default_price || 12000.0,
       production_cost: item.default_production_cost || 20000.0,
-      water_requirement: item.water_requirement || 4000.0,
+      water_requirement: waterReq,
       labor_requirement: 20.0,
       labor_cost_per_hour: 20.0,
       fertilizer_requirement: 100.0,
@@ -449,11 +517,22 @@ async function autoFillFromEcoCropModal(cropName) {
     if (!res.ok) return;
     const item = await res.json();
 
+    let waterReq = item.water_requirement || 4000.0;
+    try {
+      const wRes = await fetch(`/api/water/lookup/${encodeURIComponent(item.name)}?zone=${encodeURIComponent(state.zone)}&season=${encodeURIComponent(state.season)}`);
+      if (wRes.ok) {
+        const wData = await wRes.json();
+        if (wData.water_requirement && wData.water_requirement > 0) {
+          waterReq = wData.water_requirement;
+        }
+      }
+    } catch (e) {}
+
     document.getElementById("m-crop-name").value = item.name;
     document.getElementById("m-crop-yield").value = item.default_expected_yield || 5.0;
     document.getElementById("m-crop-price").value = item.default_price || 12000.0;
     document.getElementById("m-crop-cost").value = item.default_production_cost || 20000.0;
-    document.getElementById("m-crop-water").value = item.water_requirement || 4000.0;
+    document.getElementById("m-crop-water").value = waterReq;
     document.getElementById("m-crop-min-ph").value = item.min_ph;
     document.getElementById("m-crop-max-ph").value = item.max_ph;
     document.getElementById("m-crop-max-ec").value = item.max_ec;
@@ -472,6 +551,8 @@ async function runOptimizationAndShowPlan() {
 
   const payload = {
     version: version,
+    zone: state.zone,
+    season: state.season,
     water_budget: parseFloat(document.getElementById("budget-water").value) || 0,
     labor_budget: parseFloat(document.getElementById("budget-labor").value) || 0,
     fertilizer_budget: parseFloat(document.getElementById("budget-fertilizer").value) || 0,
