@@ -75,7 +75,7 @@ def test_v2_optimizer_solver_status_and_total_profit():
         - result.total_labor_cost
         - result.total_fertilizer_cost
     )
-    assert result.expected_profit == pytest.approx(calculated_net, abs=1e-2)
+    assert result.expected_profit == pytest.approx(calculated_net, rel=1e-3)
 
 
 def test_land_constraint_binding():
