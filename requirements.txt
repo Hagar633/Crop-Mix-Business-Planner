@@ -4,3 +4,5 @@ pandas>=2.0.0
 pytest>=8.0.0
 fastapi>=0.110.0
 uvicorn>=0.28.0
+gradio>=4.0.0
+
