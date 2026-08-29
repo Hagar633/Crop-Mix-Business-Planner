@@ -42,12 +42,21 @@ class RotationMatrixLoader:
 
         self.perennial_map: Dict[str, bool] = {}
         self.family_map: Dict[str, str] = {}
+        self.arabic_map: Dict[str, str] = {}
+        self.english_map: Dict[str, str] = {}
+
         for _, row in df_class.iterrows():
             crop_name = self.normalize_name(row["Crop (English)"])
             is_perennial = str(row["Tree_or_Perennial"]).strip().lower() == "yes"
             self.perennial_map[crop_name] = is_perennial
             if "Crop_Family" in df_class.columns:
                 self.family_map[crop_name] = self.normalize_name(row["Crop_Family"])
+            
+            if "Crop (Arabic) / اسم المحصول" in df_class.columns and pd.notna(row["Crop (Arabic) / اسم المحصول"]):
+                ar_name = self.normalize_name(row["Crop (Arabic) / اسم المحصول"])
+                self.arabic_map[crop_name] = ar_name
+                self.english_map[ar_name] = crop_name
+                self.english_map[ar_name.lower()] = crop_name
 
         # 2. Load Rotation Matrix
         df_matrix = pd.read_excel(self.excel_path, sheet_name="Rotation Matrix")
@@ -113,13 +122,19 @@ class RotationMatrixLoader:
             )
 
     def resolve_crop_name(self, crop_name: str) -> str:
-        """Resolve a crop name string to its canonical Rotation Matrix name using normalization.
+        """Resolve a crop name string (English or Arabic) to canonical Rotation Matrix name.
 
         Raises a clear ValueError if the crop cannot be matched.
         """
         clean_name = self.normalize_name(crop_name)
         if clean_name in self.matrix_crops:
             return clean_name
+
+        # Check if Arabic crop name provided
+        if clean_name in self.english_map:
+            return self.english_map[clean_name]
+        if clean_name.lower() in self.english_map:
+            return self.english_map[clean_name.lower()]
 
         lower_name = clean_name.lower()
         if lower_name in self.normalized_lookup:
@@ -129,6 +144,7 @@ class RotationMatrixLoader:
             f"Crop '{crop_name}' could not be matched in the Rotation Matrix. "
             f"Please verify spelling against official matrix crop names."
         )
+
 
     def validate_optimization_crops(self, optimization_crops: List[str]):
         """Ensure every optimization crop exists in the rotation matrix.

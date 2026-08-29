@@ -27,10 +27,13 @@ from crop_mix.models.optimizer_v3 import CropMixOptimizerV3
 from crop_mix.models.optimizer_v4 import CropMixOptimizerV4
 from crop_mix.data.rotation_loader import RotationMatrixLoader
 from crop_mix.data.water_loader import EgyptWaterDataLoader
+from crop_mix.services.llm_explainer import CropMixLLMExplainer
 
 ecocrop_db = EcoCropDatabase()
 rotation_loader = RotationMatrixLoader()
 water_loader = EgyptWaterDataLoader()
+llm_explainer = CropMixLLMExplainer()
+
 
 
 app = FastAPI(
@@ -60,20 +63,22 @@ class SoilRequirementSchema(BaseModel):
 
 class CropSchema(BaseModel):
     name: str
-    expected_yield: float = Field(..., gt=0, description="Yield in metric tons/ha")
+    name_ar: Optional[str] = Field(None, description="Arabic crop name")
+    expected_yield: float = Field(..., gt=0, description="Yield in metric tons/feddan")
     price: float = Field(..., ge=0, description="Price in EGP/ton")
-    production_cost: float = Field(..., ge=0, description="Base production cost EGP/ha")
-    water_requirement: float = Field(..., ge=0, description="Water requirement m^3/ha")
-    labor_requirement: float = Field(0.0, ge=0, description="Labor hours/ha")
+    production_cost: float = Field(..., ge=0, description="Base production cost EGP/feddan")
+    water_requirement: float = Field(..., ge=0, description="Water requirement m^3/feddan")
+    labor_requirement: float = Field(0.0, ge=0, description="Labor hours/feddan")
     labor_cost_per_hour: float = Field(20.0, ge=0, description="Labor cost EGP/hour")
-    fertilizer_requirement: float = Field(0.0, ge=0, description="Fertilizer kg/ha")
+    fertilizer_requirement: float = Field(0.0, ge=0, description="Fertilizer kg/feddan")
     fertilizer_cost_per_kg: float = Field(1.5, ge=0, description="Fertilizer cost EGP/kg")
     soil_requirement: Optional[SoilRequirementSchema] = None
 
 
 class FieldSchema(BaseModel):
     name: str
-    area: float = Field(..., gt=0, description="Field area in hectares")
+    name_ar: Optional[str] = Field(None, description="Arabic field name")
+    area: float = Field(..., gt=0, description="Field area in feddans")
     ph: float = Field(6.5, ge=0, le=14, description="Soil pH measurement")
     ec: float = Field(1.0, ge=0, description="Soil EC salinity (dS/m)")
     texture: str = Field("Loam", description="Soil texture class")
@@ -81,15 +86,20 @@ class FieldSchema(BaseModel):
     previous_crop: Optional[str] = Field(None, description="Previous crop planted in field (V4)")
 
 
+
 class OptimizationRequestSchema(BaseModel):
     version: str = Field("v4", description="Optimizer version: 'v1', 'v2', 'v3', or 'v4'")
     zone: str = Field("Delta", description="Egyptian region: Delta, Middle Egypt, Upper Egypt, Sinai / Reclaimed Lands")
     season: str = Field("Winter", description="Agricultural season: Winter, Summer, Nili, Perennial")
+    lang: str = Field("ar", description="Language: 'ar' or 'en'")
+    unit: str = Field("feddan", description="Land area unit: 'feddan' or 'ha'")
     water_budget: float = Field(..., ge=0, description="Available water budget in m^3")
     labor_budget: float = Field(2500.0, ge=0, description="Available labor budget in hours")
     fertilizer_budget: float = Field(15000.0, ge=0, description="Available fertilizer budget in kg")
     crops: List[CropSchema]
     fields: List[FieldSchema]
+
+
 
 
 # --- Helper Functions ---
@@ -111,8 +121,10 @@ def build_farm_inputs(req: OptimizationRequestSchema) -> FarmInputs:
         if water_req <= 0:
             water_req = water_loader.get_water_requirement(c.name, zone=req.zone, season=req.season)
 
+        name_ar = c.name_ar or rotation_loader.arabic_map.get(c.name, c.name)
         crops_dict[c.name] = CropParameters(
             name=c.name,
+            name_ar=name_ar,
             expected_yield=c.expected_yield,
             price=c.price,
             production_cost=c.production_cost,
@@ -129,6 +141,7 @@ def build_farm_inputs(req: OptimizationRequestSchema) -> FarmInputs:
     for f in req.fields:
         fields_dict[f.name] = FieldParameters(
             name=f.name,
+            name_ar=f.name_ar or f.name,
             area=f.area,
             ph=f.ph,
             ec=f.ec,
@@ -137,6 +150,7 @@ def build_farm_inputs(req: OptimizationRequestSchema) -> FarmInputs:
             previous_crop=f.previous_crop,
         )
         total_field_area += f.area
+
 
     if not fields_dict:
         total_field_area = sum(f.area for f in req.fields) if req.fields else 100.0
@@ -375,7 +389,9 @@ def get_rotation_matrix_info():
         "crops": crops,
         "perennial_map": rotation_loader.perennial_map,
         "family_map": rotation_loader.family_map,
+        "arabic_map": rotation_loader.arabic_map,
     }
+
 
 
 @app.get("/api/water/zones")
@@ -432,7 +448,7 @@ def run_optimization(req: OptimizationRequestSchema):
             total_fert=0.0, fert_limit=None,
         )
 
-        return {
+        res_payload = {
             "version": "V1 (Aggregate Basic)",
             "status": res.status,
             "is_feasible": res.is_feasible,
@@ -471,7 +487,7 @@ def run_optimization(req: OptimizationRequestSchema):
             total_fert=res.total_fertilizer_used, fert_limit=res.fertilizer_budget_limit,
         )
 
-        return {
+        res_payload = {
             "version": "V2 (Aggregate Labor & Fertilizer)",
             "status": res.status,
             "is_feasible": res.is_feasible,
@@ -517,7 +533,7 @@ def run_optimization(req: OptimizationRequestSchema):
             total_fert=res.total_fertilizer_used, fert_limit=res.fertilizer_budget_limit,
         )
 
-        return {
+        res_payload = {
             "version": "V4 (Soil Suitability + Crop Rotation)",
             "status": res.status,
             "is_feasible": res.is_feasible,
@@ -544,6 +560,7 @@ def run_optimization(req: OptimizationRequestSchema):
             "binding_constraints": binding,
         }
 
+
     else:  # default v3
         if not req.fields:
             raise HTTPException(status_code=400, detail="Version 3 requires at least one field definition.")
@@ -567,7 +584,7 @@ def run_optimization(req: OptimizationRequestSchema):
             total_fert=res.total_fertilizer_used, fert_limit=res.fertilizer_budget_limit,
         )
 
-        return {
+        res_payload = {
             "version": "V3 (Field-Level Soil Suitability)",
             "status": res.status,
             "is_feasible": res.is_feasible,
@@ -591,6 +608,18 @@ def run_optimization(req: OptimizationRequestSchema):
             "suitability_details": suitability_details,
             "binding_constraints": binding,
         }
+
+    # Automatically generate AI Explanation
+    res_payload["ai_explanation"] = llm_explainer.generate_explanation(res_payload, lang=req.lang)
+    return res_payload
+
+
+@app.post("/api/explain")
+def get_ai_explanation(payload: Dict[str, Any]):
+    """Generate LLM-driven explanation for a given optimization result payload."""
+    lang = payload.get("lang", "ar")
+    return llm_explainer.generate_explanation(payload, lang=lang)
+
 
 
 from fastapi.responses import FileResponse

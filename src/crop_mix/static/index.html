@@ -193,19 +193,38 @@
           </div>
           <div class="input-group">
             <label for="budget-labor">
-              <span>👷 <span data-i18n="step1.laborLabel">ساعات العمل</span></span>
+              <span>👷 <span data-i18n="step1.laborLabel">ساعات العمل المتاحة</span></span>
               <span class="unit">(ساعة)</span>
             </label>
             <input type="number" id="budget-labor" value="2500" min="0" step="50">
           </div>
           <div class="input-group">
             <label for="budget-fertilizer">
-              <span>🧪 <span data-i18n="step1.fertLabel">كمية السماد</span></span>
+              <span>🧪 <span data-i18n="step1.fertLabel">كمية السماد المتاحة</span></span>
               <span class="unit">(كجم)</span>
             </label>
             <input type="number" id="budget-fertilizer" value="15000" min="0" step="500">
           </div>
         </div>
+
+        <!-- Global Farm Cost Rates -->
+        <div class="budget-grid" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0, 0, 0, 0.1);">
+          <div class="input-group">
+            <label for="global-labor-rate">
+              <span>💵 <span data-i18n="step1.laborRateLabel">أجرة ساعة العمل للمزرعة</span></span>
+              <span class="unit">(EGP / ساعة)</span>
+            </label>
+            <input type="number" id="global-labor-rate" value="0" min="0" step="5" placeholder="مثال: 80">
+          </div>
+          <div class="input-group">
+            <label for="global-fertilizer-rate">
+              <span>💰 <span data-i18n="step1.fertRateLabel">سعر كيلو السماد للمزرعة</span></span>
+              <span class="unit">(EGP / كجم)</span>
+            </label>
+            <input type="number" id="global-fertilizer-rate" value="0" min="0" step="1" placeholder="مثال: 15">
+          </div>
+        </div>
+
         <div class="budget-grid" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0, 0, 0, 0.1);">
           <div class="input-group">
             <label for="farm-zone">
@@ -396,6 +415,21 @@
         </div>
       </div>
 
+      <!-- AI EXPLANATION CARD -->
+      <section class="card ai-explanation-card" id="ai-explanation-card" style="margin-bottom: 24px; border: 1px solid rgba(16, 185, 129, 0.3); background: linear-gradient(135deg, rgba(240, 253, 244, 0.6) 0%, rgba(255, 255, 255, 0.9) 100%);">
+        <div class="card-header" style="border-bottom: 1px solid rgba(16, 185, 129, 0.15); padding-bottom: 12px;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #065f46;">🤖 <span data-i18n="ai.title">التفسير الذكي للخطة الزراعية</span></h2>
+            <p class="panel-sub" data-i18n="ai.sub" style="color: #047857;">تحليل شامل يوضح سبب اختيار هذا التوزيع بالتحديد وكيفية تعظيم الربح الصافي</p>
+          </div>
+          <span class="status-pill success" id="ai-provider-badge" style="font-size: 0.8rem;">Gemini AI</span>
+        </div>
+        <div class="ai-body" id="ai-explanation-content" style="padding: 16px; font-size: 0.95rem; line-height: 1.7; color: #1f2937;">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+
       <!-- PRIMARY RESULT: SEASONAL FIELD ALLOCATION CARDS -->
       <section class="card">
         <div class="card-header">
@@ -559,24 +593,17 @@
         <div class="form-row">
           <div class="form-group">
             <label data-i18n="modal.labor">احتياج العمالة (ساعة/هكتار)</label>
-            <input type="number" id="m-crop-labor" step="1" min="0">
+            <input type="number" id="m-crop-labor" step="1" min="0" placeholder="مثال: 15">
           </div>
           <div class="form-group">
-            <label data-i18n="modal.laborRate">أجرة ساعة العمل (EGP/ساعة)</label>
-            <input type="number" id="m-crop-labor-rate" step="1" min="0">
+            <label data-i18n="modal.fert">احتياج السماد (كجم/هكتار)</label>
+            <input type="number" id="m-crop-fert" step="5" min="0" placeholder="مثال: 150">
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label data-i18n="modal.fert">احتياج السماد (كجم/هكتار)</label>
-            <input type="number" id="m-crop-fert" step="5" min="0">
-          </div>
-          <div class="form-group">
-            <label data-i18n="modal.fertRate">سعر كيلو السماد (EGP/كجم)</label>
-            <input type="number" id="m-crop-fert-rate" step="0.1" min="0">
-          </div>
-        </div>
+        <p class="form-hint" style="font-size:0.8rem; color:var(--text-muted); margin: -8px 0 10px; padding: 6px 10px; background: rgba(16,185,129,0.07); border-radius:6px; border-right: 3px solid #10b981;">
+          💡 <span data-i18n="modal.ratesHint">تكلفة العمالة والسماد تُحسب تلقائياً من الأسعار التي أدخلتها في الخطوة الأولى</span>
+        </p>
 
         <h4 class="modal-subtitle" data-i18n="modal.soilLimitsTitle">شروط ملائمة التربة (V3)</h4>
         <div class="form-row">
@@ -607,6 +634,16 @@
     </div>
   </div>
 
+  <!-- LOADING SPINNER OVERLAY -->
+  <div class="modal-backdrop" id="loading-modal" style="z-index: 9999;">
+    <div class="modal" style="max-width: 400px; text-align: center; padding: 32px 24px;">
+      <div class="spinner-ring" style="margin: 0 auto 16px; width: 48px; height: 48px; border: 4px solid rgba(16, 185, 129, 0.2); border-top-color: #10b981; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+      <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 8px; color: var(--text-dark);" data-i18n="loading.title">جاري التخطيط والتحليل الذكي...</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;" data-i18n="loading.sub">حساب التوزيع الرياضي الأمثل وتوليد التفسير الزراعي بواسطة الذكاء الاصطناعي</p>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>
+
