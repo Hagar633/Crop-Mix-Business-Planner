@@ -13,6 +13,12 @@ from crop_mix.data.example_data import (
     CropSoilRequirement,
     get_example_farm_data,
 )
+from crop_mix.business.financial_projection import (
+    FinancialProjection,
+    FieldCropFinancial,
+    FarmFinancialSummary,
+    FinancialProjectionResult,
+)
 
 __all__ = [
     "CropMixOptimizerV1",
@@ -30,4 +36,8 @@ __all__ = [
     "FieldParameters",
     "CropSoilRequirement",
     "get_example_farm_data",
+    "FinancialProjection",
+    "FieldCropFinancial",
+    "FarmFinancialSummary",
+    "FinancialProjectionResult",
 ]

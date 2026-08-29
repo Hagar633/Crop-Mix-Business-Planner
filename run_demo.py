@@ -1,4 +1,4 @@
-"""Standalone execution script to run Version 4 Crop Mix Optimizer with Crop Rotation."""
+"""Standalone execution script to run Version 4 Crop Mix Optimizer and Internship 4B Financial Projection."""
 
 import sys
 from pathlib import Path
@@ -10,6 +10,7 @@ if str(src_dir) not in sys.path:
 
 from crop_mix.data.example_data import get_example_farm_data
 from crop_mix.models.optimizer_v4 import CropMixOptimizerV4
+from crop_mix.business.financial_projection import FinancialProjection
 
 
 def main():
@@ -21,7 +22,7 @@ def main():
     farm_inputs = get_example_farm_data()
 
     # 1. Field Soil Measurements & Previous Crop History
-    print("\n1. FIELD DATA & HISTORICAL PREVIOUS CROPS")
+    print("\n1. FIELD DATA & HISTORICAL PREVIOUS CROPS (TEST/DEMO DATA)")
     print("-" * 85)
     df_fields = farm_inputs.fields_to_dataframe()
     print(df_fields.to_string())
@@ -81,14 +82,60 @@ def main():
     print(f"Total Labor Used      : {result.total_labor_used:,.2f} / {result.labor_budget_limit:,.2f} hours")
     print(f"Total Fertilizer Used : {result.total_fertilizer_used:,.2f} / {result.fertilizer_budget_limit:,.2f} kg")
 
-    # Financial Breakdown
-    print("\n\nFINANCIAL SUMMARY")
+    # Optimization Financial Breakdown
+    print("\n\n4A OPTIMIZER FINANCIAL SUMMARY")
     print("-" * 85)
     print(f"Total Expected Revenue    : ${result.total_expected_revenue:,.2f}")
     print(f"Total Production Cost     : ${result.total_production_cost:,.2f}")
     print(f"Total Labor Cost          : ${result.total_labor_cost:,.2f}")
     print(f"Total Fertilizer Cost     : ${result.total_fertilizer_cost:,.2f}")
     print(f"TOTAL EXPECTED NET PROFIT : ${result.expected_profit:,.2f}")
+    print("=" * 85)
+
+    # ---------------------------------------------------------------------------------
+    # INTERNSHIP 4B - FINANCIAL PROJECTION
+    # ---------------------------------------------------------------------------------
+    print("\n\n" + "=" * 85)
+    print("  INTERNSHIP 4B - FINANCIAL PROJECTION (BUSINESS TRACK)")
+    print("=" * 85)
+
+    projection_engine = FinancialProjection()
+    fin_result = projection_engine.calculate(farm_inputs, result)
+
+    print("\nFIELD-LEVEL FINANCIAL PROJECTION (TEST/DEMO DATA)")
+    print("-" * 85)
+    for field_name, crop_map in fin_result.field_projections.items():
+        if not crop_map:
+            print(f"\n{field_name}")
+            print("  (No crops allocated)")
+            continue
+        print(f"\n{field_name}")
+        for crop_name, proj in crop_map.items():
+            margin_pct = proj.profit_margin * 100.0
+            print(f"    Crop: {crop_name}")
+            print(f"    Area: {proj.allocated_area:.2f} ha")
+            print(f"    Expected Revenue: ${proj.expected_revenue:,.2f}")
+            print(f"    Production Cost: ${proj.production_cost:,.2f}")
+            print(f"    Labor Cost: ${proj.labor_cost:,.2f}")
+            print(f"    Fertilizer Cost: ${proj.fertilizer_cost:,.2f}")
+            print(f"    Total Cost: ${proj.total_cost:,.2f}")
+            print(f"    Net Profit: ${proj.net_profit:,.2f}")
+            print(f"    Profit / ha: ${proj.profit_per_hectare:,.2f} / ha")
+            print(f"    Profit Margin: {margin_pct:.2f}%")
+
+    print("\n" + "-" * 85)
+    print("FARM FINANCIAL SUMMARY (TEST/DEMO DATA)")
+    print("-" * 85)
+    summary = fin_result.farm_summary
+    overall_margin_pct = summary.overall_profit_margin * 100.0
+    print(f"Total Area: {summary.total_area:.2f} ha")
+    print(f"Total Expected Revenue: ${summary.total_expected_revenue:,.2f}")
+    print(f"Total Production Cost: ${summary.total_production_cost:,.2f}")
+    print(f"Total Labor Cost: ${summary.total_labor_cost:,.2f}")
+    print(f"Total Fertilizer Cost: ${summary.total_fertilizer_cost:,.2f}")
+    print(f"Total Cost: ${summary.total_cost:,.2f}")
+    print(f"Total Expected Net Profit: ${summary.total_expected_net_profit:,.2f}")
+    print(f"Overall Profit Margin: {overall_margin_pct:.2f}%")
     print("=" * 85)
 
 
