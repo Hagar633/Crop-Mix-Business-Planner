@@ -2,10 +2,10 @@
 title: Crop Mix Business Planner
 emoji: 🌾
 colorFrom: green
-colorTo: emerald
+colorTo: green
 sdk: gradio
 sdk_version: 4.21.0
-python_version: 3.10
+python_version: "3.10"
 app_file: app.py
 pinned: false
 ---
