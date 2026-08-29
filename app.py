@@ -4,12 +4,11 @@ import os
 # Ensure src directory is in python module path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
-import gradio as gr
-from crop_mix.app import app as fastapi_app
-
-# Mount our full FastAPI Crop Mix Business Planner inside Gradio for 100% Free HF Space deployment
-app = gr.mount_gradio_app(app=fastapi_app, blocks=gr.Blocks(), path="/")
-
+# Launch FastAPI app directly via uvicorn — no Gradio dependency needed
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    port = int(os.environ.get("PORT", 7860))
+    uvicorn.run("crop_mix.app:app", host="0.0.0.0", port=port)
+else:
+    # When imported by the Gradio runner, expose the FastAPI app as the ASGI app
+    from crop_mix.app import app
