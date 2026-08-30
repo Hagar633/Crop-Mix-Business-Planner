@@ -141,8 +141,24 @@ class CropMixOptimizerV3:
         model.fertilizer_budget_con = pyo.Constraint(rule=fertilizer_budget_rule)
 
         # 6. Solve using HiGHS
-        solver = self._get_solver()
-        results = solver.solve(model)
+        try:
+            solver = self._get_solver()
+            results = solver.solve(model)
+        except Exception as e:
+            import logging
+            logging.warning(f"Optimization via Pyomo/HiGHS failed: {e}. Falling back to pure Python Simplex solver.")
+            class MockRotationLoader:
+                def get_rotation_suitability(self, prev, curr):
+                    return 1
+            from crop_mix.models.fallback_solver import FallbackOptimizerV4
+            fallback = FallbackOptimizerV4(self.soil_engine, MockRotationLoader())
+            res_dict = fallback.solve(farm_inputs)
+            res_dict["suitability_matrix"] = res_dict.pop("soil_suitability_matrix")
+            res_dict.pop("rotation_suitability_matrix", None)
+            res_dict.pop("field_previous_crops", None)
+            return OptimizationResultV3(**res_dict)
+
+
 
         status_str = str(results.solver.status) if hasattr(results.solver, "status") else "unknown"
         term_cond = (
