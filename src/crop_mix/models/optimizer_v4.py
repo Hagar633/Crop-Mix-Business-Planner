@@ -46,9 +46,10 @@ class CropMixOptimizerV4:
     def __init__(
         self,
         solver_name: str = "appsi_highs",
-        rotation_excel_path: str = "data/crop_rotation_matrix_v10_corrected.xlsx",
+        rotation_excel_path: Optional[str] = None,
         rotation_loader: Optional[RotationMatrixLoader] = None,
     ):
+
         self.solver_name = solver_name
         self.soil_engine = SoilSuitabilityEngine()
         self.rotation_loader = rotation_loader or RotationMatrixLoader(excel_path=rotation_excel_path)
