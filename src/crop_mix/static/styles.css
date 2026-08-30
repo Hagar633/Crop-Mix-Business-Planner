@@ -1,6 +1,12 @@
 /* CropMix Egypt - Modern & Authentic Agricultural UI Stylesheet */
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 :root {
+
   --bg-main: #f3f7f4;
   --bg-card: #ffffff;
   --bg-subtle: #ebf2ec;

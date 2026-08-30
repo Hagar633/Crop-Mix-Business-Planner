@@ -1,3 +1,15 @@
+---
+title: Crop Mix Business Planner
+emoji: 🌾
+colorFrom: green
+colorTo: green
+sdk: gradio
+sdk_version: 4.44.0
+python_version: "3.10"
+app_file: app.py
+pinned: false
+---
+
 # Crop-Mix-Business-Planner
 
 A crop-mix optimization solver that recommends how to allocate farm land among different crops while maximizing expected profit.
@@ -77,3 +89,4 @@ Crop-Mix-Business-Planner/
 ├── requirements.txt
 ├── pyproject.toml
 └── README.md
+```
