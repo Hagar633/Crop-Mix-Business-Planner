@@ -169,16 +169,9 @@ class CropMixOptimizerV4:
         model.fertilizer_budget_con = pyo.Constraint(rule=fertilizer_budget_rule)
 
         # 6. Solve using HiGHS
-        try:
-            solver = self._get_solver()
-            results = solver.solve(model)
-        except Exception as e:
-            import logging
-            logging.warning(f"Optimization via Pyomo/HiGHS failed: {e}. Falling back to pure Python Simplex solver.")
-            from crop_mix.models.fallback_solver import FallbackOptimizerV4
-            fallback = FallbackOptimizerV4(self.soil_engine, self.rotation_loader)
-            res_dict = fallback.solve(farm_inputs)
-            return OptimizationResultV4(**res_dict)
+        solver = self._get_solver()
+        results = solver.solve(model)
+
 
 
         status_str = str(results.solver.status) if hasattr(results.solver, "status") else "unknown"
