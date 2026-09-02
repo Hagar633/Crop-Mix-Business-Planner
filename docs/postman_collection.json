@@ -1,0 +1,212 @@
+{
+  "info": {
+    "_postman_id": "c1f7a8b9-4321-4d9f-889e-990011223344",
+    "name": "Crop Mix Business Planner API & Database Handoff",
+    "description": "Production Postman collection for communication between Database, Optimization Engine, and Web Client teams.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "farmId",
+      "value": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "type": "string"
+    },
+    {
+      "key": "planId",
+      "value": "e4a2f1b0-8c2d-4190-a59f-67f890123456",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Farm Management & Budgets",
+      "item": [
+        {
+          "name": "Create Farm & Set Budgets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"مزرعة النيل النموذجية\",\n  \"owner_name\": \"م. يوسف عثمان\",\n  \"zone\": \"Delta\",\n  \"total_area_feddans\": 160.0,\n  \"water_budget_m3\": 500000.0,\n  \"labor_budget_hours\": 3000.0,\n  \"fertilizer_budget_kg\": 20000.0,\n  \"labor_rate_egp_per_hour\": 20.0,\n  \"fertilizer_rate_egp_per_kg\": 1.5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/farms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "farms"]
+            },
+            "description": "Stores farm entity and resource budgets into the `farms` table."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d\",\n  \"name\": \"مزرعة النيل النموذجية\",\n  \"zone\": \"Delta\",\n  \"total_area_feddans\": 160.0,\n  \"water_budget_m3\": 500000.0,\n  \"labor_budget_hours\": 3000.0,\n  \"fertilizer_budget_kg\": 20000.0,\n  \"created_at\": \"2026-09-02T19:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Farm Details & Fields",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/farms/{{farmId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "farms", "{{farmId}}"]
+            },
+            "description": "Retrieves farm budgets and associated field parcels."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Fields & Soil Measurements",
+      "item": [
+        {
+          "name": "Add Field Parcel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"farm_id\": \"{{farmId}}\",\n  \"name_en\": \"North Basin\",\n  \"name_ar\": \"حوض الشمالي\",\n  \"area_feddans\": 100.0,\n  \"soil_ph\": 6.8,\n  \"soil_ec_ds_m\": 1.2,\n  \"soil_texture\": \"Loam\",\n  \"organic_matter_pct\": 2.5,\n  \"previous_crop_name\": \"Wheat\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/farms/{{farmId}}/fields",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "farms", "{{farmId}}", "fields"]
+            },
+            "description": "Adds a field parcel with soil parameters and previous crop rotation history."
+          }
+        },
+        {
+          "name": "List Farm Fields",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/farms/{{farmId}}/fields",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "farms", "{{farmId}}", "fields"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Crop Catalog & EcoCrop Rules",
+      "item": [
+        {
+          "name": "Get All Available Crops",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ecocrop/crops",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ecocrop", "crops"]
+            },
+            "description": "Fetches standard crops with EcoCrop soil tolerance bounds."
+          }
+        },
+        {
+          "name": "Get Crop Rotation Matrix",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rotation/matrix",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rotation", "matrix"]
+            },
+            "description": "Returns full crop rotation matrix source of truth."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Optimization Engine & Saved Plans",
+      "item": [
+        {
+          "name": "Run Crop Mix Optimizer V4",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": \"v4\",\n  \"zone\": \"Delta\",\n  \"season\": \"Winter\",\n  \"lang\": \"ar\",\n  \"unit\": \"feddan\",\n  \"water_budget\": 500000.0,\n  \"labor_budget\": 3000.0,\n  \"fertilizer_budget\": 20000.0,\n  \"crops\": [\n    {\n      \"name\": \"Wheat\",\n      \"name_ar\": \"قمح\",\n      \"expected_yield\": 2.5,\n      \"price\": 12500.0,\n      \"production_cost\": 8500.0,\n      \"water_requirement\": 1890.95,\n      \"labor_requirement\": 20.0,\n      \"fertilizer_requirement\": 100.0\n    },\n    {\n      \"name\": \"Tomato\",\n      \"name_ar\": \"طماطم\",\n      \"expected_yield\": 15.0,\n      \"price\": 8000.0,\n      \"production_cost\": 19000.0,\n      \"water_requirement\": 3538.08,\n      \"labor_requirement\": 50.0,\n      \"fertilizer_requirement\": 150.0\n    },\n    {\n      \"name\": \"المانجو\",\n      \"name_ar\": \"المانجو\",\n      \"expected_yield\": 5.0,\n      \"price\": 400000.0,\n      \"production_cost\": 20000.0,\n      \"water_requirement\": 3000.0,\n      \"labor_requirement\": 30.0,\n      \"fertilizer_requirement\": 120.0,\n      \"soil_requirement\": {\n        \"min_ph\": 4.5,\n        \"max_ph\": 8.5,\n        \"max_ec\": 3.5,\n        \"suitable_textures\": [\"Loam\", \"Clay\", \"Silt\", \"Sandy\", \"Sandy Loam\"]\n      }\n    }\n  ],\n  \"fields\": [\n    {\n      \"name\": \"حوض الشمالي\",\n      \"area\": 100.0,\n      \"ph\": 6.8,\n      \"ec\": 1.2,\n      \"texture\": \"Loam\",\n      \"previous_crop\": \"Wheat\"\n    },\n    {\n      \"name\": \"حوض الشرقية\",\n      \"area\": 60.0,\n      \"ph\": 5.5,\n      \"ec\": 0.8,\n      \"texture\": \"Sandy\",\n      \"previous_crop\": \"المانجو\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/optimize",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "optimize"]
+            },
+            "description": "Executes Pyomo + HiGHS LP V4 optimization and returns profit, allocations, and binding constraints."
+          }
+        },
+        {
+          "name": "Save Plan to Database",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"farm_id\": \"{{farmId}}\",\n  \"season\": \"Winter\",\n  \"optimizer_version\": \"v4\",\n  \"status\": \"optimal\",\n  \"is_feasible\": true,\n  \"total_land_used_feddans\": 160.0,\n  \"total_water_used_m3\": 500000.0,\n  \"total_labor_used_hours\": 2500.0,\n  \"total_fertilizer_used_kg\": 18000.0,\n  \"total_expected_revenue_egp\": 125000000.0,\n  \"total_production_cost_egp\": 6231500.0,\n  \"total_labor_cost_egp\": 50000.0,\n  \"total_fertilizer_cost_egp\": 27000.0,\n  \"net_profit_egp\": 118691500.0,\n  \"allocations\": [\n    {\n      \"field_name\": \"حوض الشمالي\",\n      \"crop_name\": \"Tomato\",\n      \"allocated_area_feddans\": 100.0,\n      \"profit_contribution_egp\": 9985000.0\n    },\n    {\n      \"field_name\": \"حوض الشرقية\",\n      \"crop_name\": \"المانجو\",\n      \"allocated_area_feddans\": 60.0,\n      \"profit_contribution_egp\": 118768500.0\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans"]
+            },
+            "description": "Persists optimization output into `optimization_plans` and `plan_field_allocations` tables."
+          }
+        },
+        {
+          "name": "Get Saved Plan History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/plans/{{planId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans", "{{planId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
