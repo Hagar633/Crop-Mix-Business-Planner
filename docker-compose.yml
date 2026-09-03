@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  crop-mix-planner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cropmixplanner:latest
+    container_name: crop_mix_app
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+    restart: unless-stopped
