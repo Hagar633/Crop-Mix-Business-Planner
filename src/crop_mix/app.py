@@ -1,6 +1,6 @@
 """FastAPI web server for Crop Mix Business Planner.
 
-Provides API endpoints for farm optimization and serves static web UI.
+Provides API endpoints for farm optimization, multi-season planning, and serves static web UI.
 """
 
 import os
@@ -27,16 +27,28 @@ from crop_mix.models.optimizer_v3 import CropMixOptimizerV3
 from crop_mix.models.optimizer_v4 import CropMixOptimizerV4
 from crop_mix.data.rotation_loader import RotationMatrixLoader
 from crop_mix.data.water_loader import EgyptWaterDataLoader
+from crop_mix.data.crop_seasons import (
+    get_allowed_seasons,
+    get_arabic_crop_name,
+    get_canonical_crop_name,
+    is_crop_allowed_in_season,
+    CROP_ARABIC_NAMES,
+)
+from crop_mix.business.financial_projection import FinancialProjection
+from crop_mix.business.multi_season_planner import MultiSeasonPlanner, SeasonPlan
 
 ecocrop_db = EcoCropDatabase()
 rotation_loader = RotationMatrixLoader()
 water_loader = EgyptWaterDataLoader()
 
+# Multi-season active session cache
+active_multi_season_sessions: Dict[str, MultiSeasonPlanner] = {}
+
 
 app = FastAPI(
     title="Crop Mix Business Planner API",
     description="Mathematical optimization REST API for agricultural crop mix planning.",
-    version="0.1.0",
+    version="0.2.0",
 )
 
 # Enable CORS for development
@@ -92,6 +104,26 @@ class OptimizationRequestSchema(BaseModel):
     fields: List[FieldSchema]
 
 
+class StartMultiSeasonRequest(BaseModel):
+    session_id: str = Field("default", description="Session identifier")
+    candidate_crops: List[str] = Field(..., description="List of candidate crop names")
+    season_1_recommendation: Optional[Dict[str, Optional[str]]] = Field(None, description="Field -> recommended crop from Season 1")
+    current_season_name: Optional[str] = Field("Winter", description="Current season name")
+    water_budget: Optional[float] = Field(None, ge=0)
+    labor_budget: Optional[float] = Field(None, ge=0)
+    fertilizer_budget: Optional[float] = Field(None, ge=0)
+    farm_request: Optional[OptimizationRequestSchema] = None
+
+
+class NextSeasonRequest(BaseModel):
+    session_id: str = Field("default", description="Session identifier")
+    season_name: str = Field("Winter", description="Agricultural season to plan ('Winter', 'Summer', 'Nili')")
+    water_budget: Optional[float] = Field(None, ge=0)
+    labor_budget: Optional[float] = Field(None, ge=0)
+    fertilizer_budget: Optional[float] = Field(None, ge=0)
+    candidate_crops: Optional[List[str]] = Field(None, description="Optional explicit candidate crops update")
+
+
 # --- Helper Functions ---
 
 def build_farm_inputs(req: OptimizationRequestSchema) -> FarmInputs:
@@ -111,8 +143,10 @@ def build_farm_inputs(req: OptimizationRequestSchema) -> FarmInputs:
         if water_req <= 0:
             water_req = water_loader.get_water_requirement(c.name, zone=req.zone, season=req.season)
 
-        crops_dict[c.name] = CropParameters(
-            name=c.name,
+        canonical_name = get_canonical_crop_name(c.name)
+
+        crops_dict[canonical_name] = CropParameters(
+            name=canonical_name,
             expected_yield=c.expected_yield,
             price=c.price,
             production_cost=c.production_cost,
@@ -134,7 +168,7 @@ def build_farm_inputs(req: OptimizationRequestSchema) -> FarmInputs:
             ec=f.ec,
             texture=f.texture,
             organic_matter=f.organic_matter,
-            previous_crop=f.previous_crop,
+            previous_crop=get_canonical_crop_name(f.previous_crop) if f.previous_crop else None,
         )
         total_field_area += f.area
 
@@ -180,6 +214,7 @@ def compute_suitability_explanations(farm_inputs: FarmInputs) -> List[Dict[str, 
             details.append({
                 "field": f_name,
                 "crop": c_name,
+                "crop_arabic": get_arabic_crop_name(c_name),
                 "suitable": suitable,
                 "reason": reason_str,
             })
@@ -203,14 +238,16 @@ def compute_rotation_explanations(farm_inputs: FarmInputs) -> List[Dict[str, Any
                 if prev_c is None or not str(prev_c).strip() or str(prev_c).lower() == "none":
                     reason_str = "No previous crop history (unconstrained)"
                 elif is_suitable:
-                    reason_str = f"Recommended rotation after '{prev_c}'"
+                    reason_str = f"Recommended rotation after '{get_arabic_crop_name(prev_c)}'"
                 else:
-                    reason_str = f"Agronomically disallowed succession after '{prev_c}'"
+                    reason_str = f"Agronomically disallowed succession after '{get_arabic_crop_name(prev_c)}'"
 
             details.append({
                 "field": f_name,
                 "crop": c_name,
+                "crop_arabic": get_arabic_crop_name(c_name),
                 "previous_crop": prev_c or "None",
+                "previous_crop_arabic": get_arabic_crop_name(prev_c) if prev_c else "لا يوجد",
                 "suitable": is_suitable,
                 "reason": reason_str,
             })
@@ -282,6 +319,8 @@ def get_preset_farm():
 
         crops_list.append({
             "name": c.name,
+            "name_arabic": get_arabic_crop_name(c.name),
+            "allowed_seasons": get_allowed_seasons(c.name),
             "expected_yield": c.expected_yield,
             "price": c.price,
             "production_cost": c.production_cost,
@@ -305,6 +344,7 @@ def get_preset_farm():
             "texture": f.texture,
             "organic_matter": f.organic_matter,
             "previous_crop": f.previous_crop,
+            "previous_crop_arabic": get_arabic_crop_name(f.previous_crop) if f.previous_crop else "لا يوجد",
         })
 
     return {
@@ -325,6 +365,7 @@ def list_ecocrop_species(q: Optional[str] = None, category: Optional[str] = None
         return [
             {
                 "name": entry.name,
+                "name_arabic": get_arabic_crop_name(entry.name),
                 "scientific_name": entry.scientific_name,
                 "category": entry.category,
                 "min_ph": entry.min_ph,
@@ -349,6 +390,7 @@ def get_ecocrop_details(crop_name: str):
         raise HTTPException(status_code=404, detail=f"Crop '{crop_name}' not found in EcoCrop DB.")
     return {
         "name": entry.name,
+        "name_arabic": get_arabic_crop_name(entry.name),
         "scientific_name": entry.scientific_name,
         "category": entry.category,
         "min_ph": entry.min_ph,
@@ -399,10 +441,9 @@ def get_crop_water_requirement(crop_name: str, zone: str = "Delta", season: str 
     }
 
 
-
 @app.post("/api/optimize")
 def run_optimization(req: OptimizationRequestSchema):
-    """Run optimization algorithm (V1, V2, or V3) for provided farm inputs."""
+    """Run optimization algorithm (V1, V2, V3, or V4) for provided farm inputs."""
     if not req.crops:
         raise HTTPException(status_code=400, detail="At least one crop must be defined.")
 
@@ -412,7 +453,7 @@ def run_optimization(req: OptimizationRequestSchema):
     if version == "v1":
         optimizer = CropMixOptimizerV1()
         res = optimizer.solve(farm_inputs)
-        
+
         total_revenue = sum(
             ha * farm_inputs.crops[c].revenue_per_hectare for c, ha in res.crop_allocation.items()
         )
@@ -420,11 +461,7 @@ def run_optimization(req: OptimizationRequestSchema):
             ha * farm_inputs.crops[c].production_cost for c, ha in res.crop_allocation.items()
         )
 
-        field_allocations = {
-            "All_Fields": res.crop_allocation
-        }
-
-        suitability_details = []
+        field_allocations = {"All_Fields": res.crop_allocation}
         binding = identify_binding_constraints(
             total_land=res.total_land_used, land_limit=res.field_area_limit,
             total_water=res.total_water_used, water_limit=res.water_budget_limit,
@@ -451,7 +488,7 @@ def run_optimization(req: OptimizationRequestSchema):
             "fertilizer_budget_limit": None,
             "crop_allocation_summary": res.crop_allocation,
             "field_allocations": field_allocations,
-            "suitability_details": suitability_details,
+            "suitability_details": [],
             "binding_constraints": binding,
         }
 
@@ -459,11 +496,20 @@ def run_optimization(req: OptimizationRequestSchema):
         optimizer = CropMixOptimizerV2()
         res = optimizer.solve(farm_inputs)
 
-        field_allocations = {
-            "All_Fields": res.crop_allocation
-        }
+        total_revenue = sum(
+            ha * farm_inputs.crops[c].revenue_per_hectare for c, ha in res.crop_allocation.items()
+        )
+        total_prod_cost = sum(
+            ha * farm_inputs.crops[c].production_cost for c, ha in res.crop_allocation.items()
+        )
+        total_labor_cost = sum(
+            ha * farm_inputs.crops[c].labor_cost_per_hectare for c, ha in res.crop_allocation.items()
+        )
+        total_fert_cost = sum(
+            ha * farm_inputs.crops[c].fertilizer_cost_per_hectare for c, ha in res.crop_allocation.items()
+        )
 
-        suitability_details = []
+        field_allocations = {"All_Fields": res.crop_allocation}
         binding = identify_binding_constraints(
             total_land=res.total_land_used, land_limit=res.field_area_limit,
             total_water=res.total_water_used, water_limit=res.water_budget_limit,
@@ -472,7 +518,52 @@ def run_optimization(req: OptimizationRequestSchema):
         )
 
         return {
-            "version": "V2 (Aggregate Labor & Fertilizer)",
+            "version": "V2 (Resource Budgets)",
+            "status": res.status,
+            "is_feasible": res.is_feasible,
+            "expected_profit": res.expected_profit,
+            "total_expected_revenue": round(total_revenue, 2),
+            "total_production_cost": round(total_prod_cost, 2),
+            "total_labor_cost": round(total_labor_cost, 2),
+            "total_fertilizer_cost": round(total_fert_cost, 2),
+            "total_land_used": res.total_land_used,
+            "field_area_limit": res.field_area_limit,
+            "total_water_used": res.total_water_used,
+            "water_budget_limit": res.water_budget_limit,
+            "total_labor_used": res.total_labor_used,
+            "labor_budget_limit": res.labor_budget_limit,
+            "total_fertilizer_used": res.total_fertilizer_used,
+            "fertilizer_budget_limit": res.fertilizer_budget_limit,
+            "crop_allocation_summary": res.crop_allocation,
+            "field_allocations": field_allocations,
+            "suitability_details": [],
+            "binding_constraints": binding,
+        }
+
+    elif version == "v3":
+        if not req.fields:
+            raise HTTPException(status_code=400, detail="Version 3 requires at least one field definition.")
+
+        optimizer = CropMixOptimizerV3()
+        res = optimizer.solve(farm_inputs)
+
+        summary_crop_alloc: Dict[str, float] = {}
+        for c in farm_inputs.crops.keys():
+            summary_crop_alloc[c] = sum(
+                res.crop_allocation[f].get(c, 0.0) for f in farm_inputs.fields.keys()
+            )
+
+        suitability_details = compute_suitability_explanations(farm_inputs)
+
+        binding = identify_binding_constraints(
+            total_land=res.total_land_used, land_limit=sum(f.area for f in farm_inputs.fields.values()),
+            total_water=res.total_water_used, water_limit=res.water_budget_limit,
+            total_labor=res.total_labor_used, labor_limit=res.labor_budget_limit,
+            total_fert=res.total_fertilizer_used, fert_limit=res.fertilizer_budget_limit,
+        )
+
+        return {
+            "version": "V3 (Soil Suitability)",
             "status": res.status,
             "is_feasible": res.is_feasible,
             "expected_profit": res.expected_profit,
@@ -481,15 +572,17 @@ def run_optimization(req: OptimizationRequestSchema):
             "total_labor_cost": res.total_labor_cost,
             "total_fertilizer_cost": res.total_fertilizer_cost,
             "total_land_used": res.total_land_used,
-            "field_area_limit": res.field_area_limit,
+            "field_area_limit": sum(f.area for f in farm_inputs.fields.values()),
             "total_water_used": res.total_water_used,
             "water_budget_limit": res.water_budget_limit,
             "total_labor_used": res.total_labor_used,
             "labor_budget_limit": sanitize_val(res.labor_budget_limit),
             "total_fertilizer_used": res.total_fertilizer_used,
             "fertilizer_budget_limit": sanitize_val(res.fertilizer_budget_limit),
-            "crop_allocation_summary": res.crop_allocation,
-            "field_allocations": field_allocations,
+            "crop_allocation_summary": summary_crop_alloc,
+            "field_allocations": res.crop_allocation,
+            "field_land_used": res.field_land_used,
+            "field_land_limits": res.field_land_limits,
             "suitability_details": suitability_details,
             "binding_constraints": binding,
         }
@@ -500,6 +593,10 @@ def run_optimization(req: OptimizationRequestSchema):
 
         optimizer = CropMixOptimizerV4(rotation_loader=rotation_loader)
         res = optimizer.solve(farm_inputs)
+
+        # 4B Phase 1 Financial Projection calculation
+        financial_engine = FinancialProjection()
+        fin_res = financial_engine.calculate(farm_inputs, res)
 
         summary_crop_alloc: Dict[str, float] = {}
         for c in farm_inputs.crops.keys():
@@ -516,6 +613,26 @@ def run_optimization(req: OptimizationRequestSchema):
             total_labor=res.total_labor_used, labor_limit=res.labor_budget_limit,
             total_fert=res.total_fertilizer_used, fert_limit=res.fertilizer_budget_limit,
         )
+
+        fin_field_dict = {}
+        for f_name, c_map in fin_res.field_projections.items():
+            fin_field_dict[f_name] = {}
+            for c_name, p in c_map.items():
+                fin_field_dict[f_name][c_name] = {
+                    "field_name": p.field_name,
+                    "crop_name": p.crop_name,
+                    "crop_name_arabic": get_arabic_crop_name(p.crop_name),
+                    "allocated_area": p.allocated_area,
+                    "expected_revenue": p.expected_revenue,
+                    "production_cost": p.production_cost,
+                    "labor_cost": p.labor_cost,
+                    "fertilizer_cost": p.fertilizer_cost,
+                    "total_cost": p.total_cost,
+                    "net_profit": p.net_profit,
+                    "profit_per_hectare": p.profit_per_hectare,
+                    "profit_margin": p.profit_margin,
+                    "profit_margin_pct": round(p.profit_margin * 100.0, 2),
+                }
 
         return {
             "version": "V4 (Soil Suitability + Crop Rotation)",
@@ -542,55 +659,134 @@ def run_optimization(req: OptimizationRequestSchema):
             "rotation_details": rotation_details,
             "field_previous_crops": res.field_previous_crops,
             "binding_constraints": binding,
+            "financial_projection": {
+                "farm_summary": {
+                    "total_area": fin_res.farm_summary.total_area,
+                    "total_expected_revenue": fin_res.farm_summary.total_expected_revenue,
+                    "total_production_cost": fin_res.farm_summary.total_production_cost,
+                    "total_labor_cost": fin_res.farm_summary.total_labor_cost,
+                    "total_fertilizer_cost": fin_res.farm_summary.total_fertilizer_cost,
+                    "total_cost": fin_res.farm_summary.total_cost,
+                    "total_expected_net_profit": fin_res.farm_summary.total_expected_net_profit,
+                    "overall_profit_margin": fin_res.farm_summary.overall_profit_margin,
+                    "overall_profit_margin_pct": round(fin_res.farm_summary.overall_profit_margin * 100.0, 2),
+                },
+                "field_projections": fin_field_dict,
+            },
         }
 
-    else:  # default v3
-        if not req.fields:
-            raise HTTPException(status_code=400, detail="Version 3 requires at least one field definition.")
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported version '{version}'.")
 
-        optimizer = CropMixOptimizerV3()
-        res = optimizer.solve(farm_inputs)
 
-        # Aggregate crop totals across all fields
-        summary_crop_alloc: Dict[str, float] = {}
-        for c in farm_inputs.crops.keys():
-            summary_crop_alloc[c] = sum(
-                res.crop_allocation[f].get(c, 0.0) for f in farm_inputs.fields.keys()
-            )
+# --- Internship 4B Phase 2: Multi-Season API Endpoints ---
 
-        suitability_details = compute_suitability_explanations(farm_inputs)
+@app.post("/api/multi-season/start")
+def start_multi_season(req: StartMultiSeasonRequest):
+    """Initialize a rolling multi-season planning session using completed Season 1 recommendation."""
+    if not req.candidate_crops:
+        raise HTTPException(status_code=400, detail="candidate_crops list cannot be empty.")
 
-        binding = identify_binding_constraints(
-            total_land=res.total_land_used, land_limit=sum(f.area for f in farm_inputs.fields.values()),
-            total_water=res.total_water_used, water_limit=res.water_budget_limit,
-            total_labor=res.total_labor_used, labor_limit=res.labor_budget_limit,
-            total_fert=res.total_fertilizer_used, fert_limit=res.fertilizer_budget_limit,
+    if req.farm_request:
+        farm_inputs = build_farm_inputs(req.farm_request)
+    else:
+        farm_inputs = get_example_farm_data()
+
+    try:
+        planner = MultiSeasonPlanner(farm_inputs, rotation_loader=rotation_loader)
+        planner.set_candidate_crops(req.candidate_crops)
+
+        # The multi-season workflow always begins after the completed current
+        # season. Seed it even when the optimizer recommended fallow land only.
+        planner.seed_season_1(
+            previous_crops=req.season_1_recommendation or {},
+            season_name=req.current_season_name or "Winter",
+            water_budget=req.water_budget,
+            labor_budget=req.labor_budget,
+            fertilizer_budget=req.fertilizer_budget,
         )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
-        return {
-            "version": "V3 (Field-Level Soil Suitability)",
-            "status": res.status,
-            "is_feasible": res.is_feasible,
-            "expected_profit": res.expected_profit,
-            "total_expected_revenue": res.total_expected_revenue,
-            "total_production_cost": res.total_production_cost,
-            "total_labor_cost": res.total_labor_cost,
-            "total_fertilizer_cost": res.total_fertilizer_cost,
-            "total_land_used": res.total_land_used,
-            "field_area_limit": sum(f.area for f in farm_inputs.fields.values()),
-            "total_water_used": res.total_water_used,
-            "water_budget_limit": res.water_budget_limit,
-            "total_labor_used": res.total_labor_used,
-            "labor_budget_limit": sanitize_val(res.labor_budget_limit),
-            "total_fertilizer_used": res.total_fertilizer_used,
-            "fertilizer_budget_limit": sanitize_val(res.fertilizer_budget_limit),
-            "crop_allocation_summary": summary_crop_alloc,
-            "field_allocations": res.crop_allocation,
-            "field_land_used": res.field_land_used,
-            "field_land_limits": res.field_land_limits,
-            "suitability_details": suitability_details,
-            "binding_constraints": binding,
-        }
+    active_multi_season_sessions[req.session_id] = planner
+
+    return {
+        "session_id": req.session_id,
+        "candidate_crops": planner.candidate_crops,
+        "candidate_crops_arabic": [get_arabic_crop_name(c) for c in planner.candidate_crops],
+        "current_previous_crops": planner.current_previous_crops,
+        "current_previous_crops_arabic": {
+            f: get_arabic_crop_name(c) if c else "لا يوجد"
+            for f, c in planner.current_previous_crops.items()
+        },
+        "current_water_budget": planner.current_water_budget,
+        "current_labor_budget": planner.current_labor_budget,
+        "current_fertilizer_budget": planner.current_fertilizer_budget,
+        "next_season_number": len(planner.seasons) + 1,
+        "message": "تم بدء جلسة التخطيط متعدد المواسم بنجاح.",
+    }
+
+
+@app.post("/api/multi-season/next-season")
+def plan_next_season(req: NextSeasonRequest):
+    """Plan ONE next season in the rolling sequence."""
+    planner = active_multi_season_sessions.get(req.session_id)
+    if not planner:
+        farm_inputs = get_example_farm_data()
+        planner = MultiSeasonPlanner(farm_inputs, rotation_loader=rotation_loader)
+        c_list = req.candidate_crops or list(farm_inputs.crops.keys())
+        planner.set_candidate_crops(c_list)
+        active_multi_season_sessions[req.session_id] = planner
+    elif req.candidate_crops:
+        planner.set_candidate_crops(req.candidate_crops)
+
+    try:
+        plan: SeasonPlan = planner.plan_next_season(
+            season_name=req.season_name,
+            water_budget=req.water_budget,
+            labor_budget=req.labor_budget,
+            fertilizer_budget=req.fertilizer_budget,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    return {
+        "session_id": req.session_id,
+        "season_number": plan.season_number,
+        "season_name": plan.season_name,
+        "is_current_season": plan.is_current_season,
+        "explanation_note": plan.explanation_note,
+        "candidate_crops": plan.candidate_crops,
+        "candidate_crops_arabic": [get_arabic_crop_name(c) for c in plan.candidate_crops],
+        "season_allowed_crops": plan.season_allowed_crops,
+        "season_allowed_crops_arabic": [get_arabic_crop_name(c) for c in plan.season_allowed_crops],
+        "previous_crops": plan.previous_crops,
+        "previous_crops_arabic": {
+            f: get_arabic_crop_name(c) if c else "لا يوجد"
+            for f, c in plan.previous_crops.items()
+        },
+        "next_previous_crops": planner.current_previous_crops,
+        "next_previous_crops_arabic": {
+            f: get_arabic_crop_name(c) if c else "لا يوجد"
+            for f, c in planner.current_previous_crops.items()
+        },
+        "water_budget": plan.water_budget,
+        "labor_budget": plan.labor_budget,
+        "fertilizer_budget": plan.fertilizer_budget,
+        "crop_allocation": plan.crop_allocation,
+        "resource_usage": plan.resource_usage,
+        "financial_summary": {
+            "total_area": plan.financial_projection.farm_summary.total_area,
+            "total_expected_revenue": plan.financial_projection.farm_summary.total_expected_revenue,
+            "total_production_cost": plan.financial_projection.farm_summary.total_production_cost,
+            "total_labor_cost": plan.financial_projection.farm_summary.total_labor_cost,
+            "total_fertilizer_cost": plan.financial_projection.farm_summary.total_fertilizer_cost,
+            "total_cost": plan.financial_projection.farm_summary.total_cost,
+            "total_expected_net_profit": plan.financial_projection.farm_summary.total_expected_net_profit,
+            "overall_profit_margin_pct": round(plan.financial_projection.farm_summary.overall_profit_margin * 100.0, 2),
+        },
+        "field_financials": plan.financial_projection.field_projections,
+    }
 
 
 from fastapi.responses import FileResponse
@@ -598,20 +794,20 @@ from fastapi.responses import FileResponse
 # --- Serve Static UI Files ---
 static_dir = Path(__file__).resolve().parent / "static"
 
+
+@app.get("/")
+def read_index():
+    return FileResponse(static_dir / "index.html")
+
+
 @app.get("/styles.css")
-def serve_styles_css():
-    css_file = static_dir / "styles.css"
-    if css_file.exists():
-        return FileResponse(css_file, media_type="text/css")
-    raise HTTPException(status_code=404, detail="styles.css not found")
+def read_styles():
+    return FileResponse(static_dir / "styles.css", media_type="text/css")
+
 
 @app.get("/app.js")
-def serve_app_js():
-    js_file = static_dir / "app.js"
-    if js_file.exists():
-        return FileResponse(js_file, media_type="application/javascript")
-    raise HTTPException(status_code=404, detail="app.js not found")
+def read_js():
+    return FileResponse(static_dir / "app.js", media_type="application/javascript")
 
-if static_dir.exists():
-    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static_files")
-    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")

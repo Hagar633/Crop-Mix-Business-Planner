@@ -1,4 +1,4 @@
-"""Standalone execution script to run Version 4 Crop Mix Optimizer and Internship 4B Financial Projection."""
+"""Standalone execution script for Crop Mix Optimization System (V1-V4, 4B Phase 1, and 4B Phase 2 Multi-Season Planner)."""
 
 import sys
 from pathlib import Path
@@ -11,9 +11,13 @@ if str(src_dir) not in sys.path:
 from crop_mix.data.example_data import get_example_farm_data
 from crop_mix.models.optimizer_v4 import CropMixOptimizerV4
 from crop_mix.business.financial_projection import FinancialProjection
+from crop_mix.business.multi_season_planner import MultiSeasonPlanner
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
     print("=" * 85)
     print("  CROP MIX OPTIMIZATION SYSTEM (VERSION 4 - CROP ROTATION & SOIL SUITABILITY)")
     print("=" * 85)
@@ -93,10 +97,10 @@ def main():
     print("=" * 85)
 
     # ---------------------------------------------------------------------------------
-    # INTERNSHIP 4B - FINANCIAL PROJECTION
+    # INTERNSHIP 4B PHASE 1 - FINANCIAL PROJECTION
     # ---------------------------------------------------------------------------------
     print("\n\n" + "=" * 85)
-    print("  INTERNSHIP 4B - FINANCIAL PROJECTION (BUSINESS TRACK)")
+    print("  INTERNSHIP 4B PHASE 1 - FINANCIAL PROJECTION (BUSINESS TRACK)")
     print("=" * 85)
 
     projection_engine = FinancialProjection()
@@ -136,6 +140,58 @@ def main():
     print(f"Total Cost: ${summary.total_cost:,.2f}")
     print(f"Total Expected Net Profit: ${summary.total_expected_net_profit:,.2f}")
     print(f"Overall Profit Margin: {overall_margin_pct:.2f}%")
+
+    # ---------------------------------------------------------------------------------
+    # INTERNSHIP 4B PHASE 2 - MULTI-SEASON CROP ROTATION PLANNER (ROLLING SEQUENCE)
+    # ---------------------------------------------------------------------------------
+    print("\n\n" + "=" * 85)
+    print("  INTERNSHIP 4B PHASE 2 - MULTI-SEASON CROP ROTATION PLANNER (DEMO)")
+    print("=" * 85)
+    print("  NOTE: Rolling planner generates ONE season per explicit call.")
+    print("  - Season 1: Soil suitability ACTIVE (current measured soil pH, EC, texture).")
+    print("  - Season 2+: Soil suitability DISABLED (future soil measurements unknown).")
+    print("=" * 85)
+
+    # 1. Initialize MultiSeasonPlanner with candidate crop pool (selected ONCE)
+    planner = MultiSeasonPlanner(farm_inputs)
+    candidate_pool = ["Wheat", "Yellow Corn", "Soybean", "Tomato", "Cotton"]
+    planner.set_candidate_crops(candidate_pool)
+
+    print(f"\nLocked Candidate Crops Pool (Selected ONCE): {candidate_pool}")
+
+    # 2. Sequential Rolling Calls
+    seasons_to_plan = ["Winter", "Summer", "Winter"]
+
+    for idx, season_name in enumerate(seasons_to_plan, start=1):
+        print("\n" + "-" * 85)
+        print(f"CALL {idx}: planner.plan_next_season('{season_name}')")
+        print("-" * 85)
+
+        # Plan next single season
+        plan = planner.plan_next_season(season_name)
+
+        print(f"Season Number       : {plan.season_number}")
+        print(f"Season Name         : {plan.season_name}")
+        print(f"Is Current Season   : {plan.is_current_season}  (Soil Suitability: {'ACTIVE' if plan.is_current_season else 'DISABLED'})")
+        print(f"Explanation Note    : {plan.explanation_note}")
+        print(f"Active Water Budget : {plan.water_budget:,.2f} m^3  (Carried forward by default)")
+        print(f"Allowed Season Crops: {plan.season_allowed_crops}")
+        print(f"Previous Crops Used : {plan.previous_crops}")
+
+        print("\nField Allocations & Net Profit Contribution:")
+        for f_name, allocs in plan.crop_allocation.items():
+            alloc_str = ", ".join(f"{c}: {ha:.2f} ha" for c, ha in allocs.items() if ha > 0) or "None"
+            print(f"  * {f_name:<15} (Prev: {plan.previous_crops[f_name] or 'None':<10}) -> {alloc_str}")
+
+        fin_sum = plan.financial_projection.farm_summary
+        print("\nFinancial Summary for Season:")
+        print(f"  * Total Expected Revenue    : ${fin_sum.total_expected_revenue:,.2f}")
+        print(f"  * Total Cost                : ${fin_sum.total_cost:,.2f}")
+        print(f"  * Total Expected Net Profit : ${fin_sum.total_expected_net_profit:,.2f}")
+        print(f"  * Overall Profit Margin     : {fin_sum.overall_profit_margin * 100.0:.2f}%")
+
+    print("\n" + "=" * 85)
+    print("  MULTI-SEASON DEMONSTRATION COMPLETE")
     print("=" * 85)
 
 

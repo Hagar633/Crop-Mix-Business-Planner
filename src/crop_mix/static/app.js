@@ -38,7 +38,7 @@ const i18nData = {
     "opt.headerTagline": "إعداد بيانات المزرعة والأراضي",
     "opt.engineLabel": "المحرك:",
     "opt.loadPreset": "تحميل مزرعة افتراضية",
-    "opt.generatePlanBtn": "توليد الخطة الزراعية للمواسم القادمة 🚀",
+    "opt.generatePlanBtn": "حساب الخطة الحالية 🚀",
     "step1.title": "الميزانية العامة للمزرعة",
     "step1.sub": "المياه المتاحة والعمالة والأسمدة",
     "step1.waterLabel": "ميزانية المياه",
@@ -80,8 +80,11 @@ const i18nData = {
     "res.headerTagline": "التوزيع الموصى به للمواسم القادمة",
     "res.editInputsBtn": "تعديل البيانات ✏️",
     "res.printBtn": "طباعة الخطة 🖨️",
-    "res.planMainTitle": "الخطة الزراعية التقديرية للمواسم القادمة",
-    "res.planMainSub": "خطة موزعة على أراضيك بناءً على أعلى ربحية صافية واشتراطات الدورة الزراعية وملاءمة التربة",
+    "res.planMainTitle": "توصية الخطة الزراعية للموسم الحالي",
+    "res.planMainSub": "خطة موزعة على أراضيك بناءً على خصائص التربة الحالية والدورة الزراعية وأعلى ربحية صافية",
+    "res.nextSeasonSectionTitle": "التخطيط للمواسم القادمة (التخطيط التتابعي والدورة الزراعية)",
+    "res.nextSeasonSectionSub": "قم بالتخطيط للمواسم القادمة موسم بموسم بناءً على المحاصيل الموصى بها في هذا الموسم ودورة زراعية مستمرة بدون افتراضات تربة مستقبلية.",
+    "res.planNextSeason": "التخطيط للموسم القادم",
     "kpi.profit": "إجمالي الربح الصافي المتوقع",
     "kpi.profitSub": "صافي الربح التقديري",
     "kpi.revenue": "إجمالي الإيرادات المتوقعة",
@@ -183,8 +186,11 @@ const i18nData = {
     "res.headerTagline": "Recommended Seasonal Plan",
     "res.editInputsBtn": "Edit Data ✏️",
     "res.printBtn": "Print Plan 🖨️",
-    "res.planMainTitle": "Seasonal Farm Allocation Plan",
-    "res.planMainSub": "Optimal allocation across fields based on profit, rotation, and soil match",
+    "res.planMainTitle": "Current Season Farm Allocation Plan",
+    "res.planMainSub": "Optimal allocation across fields based on current measured soil conditions, rotation rules, and profit",
+    "res.nextSeasonSectionTitle": "Future Multi-Season Planning (Sequential Crop Rotation)",
+    "res.nextSeasonSectionSub": "Plan future seasons one by one based on the recommended crop allocations of the current season without future soil assumptions.",
+    "res.planNextSeason": "Plan Next Season",
     "kpi.profit": "Expected Net Profit",
     "kpi.profitSub": "Estimated Net Profit",
     "kpi.revenue": "Expected Gross Revenue",
@@ -300,15 +306,72 @@ function applyLanguage(lang) {
   }
 }
 
+// Canonical crop name lookup for cross-language resolution
+const canonicalCropMap = {
+  "wheat": "Wheat",
+  "قمح": "Wheat",
+  "yellow corn": "Yellow Corn",
+  "corn": "Yellow Corn",
+  "maize": "Yellow Corn",
+  "ذرة صفراء": "Yellow Corn",
+  "soybean": "Soybean",
+  "soybeans": "Soybean",
+  "فول صويا": "Soybean",
+  "tomato": "Tomato",
+  "tomatoes": "Tomato",
+  "طماطم": "Tomato",
+  "cotton": "Cotton",
+  "قطن": "Cotton",
+  "potato": "Potato",
+  "potatoes": "Potato",
+  "بطاطس": "Potato",
+  "onion": "Onion",
+  "onions": "Onion",
+  "بصل": "Onion",
+  "barley": "Barley",
+  "شعير": "Barley",
+  "rice": "Rice",
+  "أرز": "Rice",
+  "sugar beet": "Sugar Beet",
+  "sugarbeet": "Sugar Beet",
+  "بنجر السكر": "Sugar Beet",
+  "sugar cane": "Sugar Cane",
+  "sugarcane": "Sugar Cane",
+  "قصب السكر": "Sugar Cane",
+  "alfalfa": "Alfalfa",
+  "berseem": "Alfalfa",
+  "برسيم": "Alfalfa",
+  "برسيم حجازي": "Alfalfa",
+};
+
+function getCanonicalCropName(cropName) {
+  if (!cropName) return "";
+  const clean = String(cropName).trim().toLowerCase();
+  return canonicalCropMap[clean] || String(cropName).trim();
+}
+
 function getCurrencySymbol() {
   return state.lang === "ar" ? "ج.م" : "EGP";
 }
 
-function getCropDisplayName(name) {
-  if (state.lang === "ar" && cropNamesAr[name]) {
-    return cropNamesAr[name];
+function getCropDisplayName(c) {
+  let name = "";
+  let nameAr = "";
+  if (typeof c === "object" && c !== null) {
+    name = c.name || "";
+    nameAr = c.name_arabic || c.arabic_name || "";
+  } else {
+    name = String(c || "");
   }
-  return name;
+
+  const canonical = getCanonicalCropName(name);
+
+  if (state.lang === "ar") {
+    if (cropNamesAr[canonical]) return cropNamesAr[canonical];
+    if (cropNamesAr[name]) return cropNamesAr[name];
+    if (nameAr) return `${nameAr} (${canonical || name})`;
+  }
+  return canonical || name;
 }
 
 function initEventListeners() {
@@ -627,21 +690,30 @@ function renderCropsTable() {
   const curr = getCurrencySymbol();
 
   state.crops.forEach((c, idx) => {
-    const rev = c.expected_yield * c.price;
-    const laborCost = (c.labor_requirement || 0) * (c.labor_cost_per_hour || 20);
-    const fertCost = (c.fertilizer_requirement || 0) * (c.fertilizer_cost_per_kg || 1.5);
-    const profit = rev - c.production_cost - laborCost - fertCost;
-    const cropDisp = getCropDisplayName(c.name);
+    const yieldVal = Number(c.expected_yield) || 0;
+    const priceVal = Number(c.price) || 0;
+    const costVal = Number(c.production_cost) || 0;
+    const waterVal = Number(c.water_requirement) || 0;
+    const laborVal = Number(c.labor_requirement) || 0;
+    const laborRateVal = Number(c.labor_cost_per_hour) || 20;
+    const fertVal = Number(c.fertilizer_requirement) || 0;
+    const fertRateVal = Number(c.fertilizer_cost_per_kg) || 1.5;
+
+    const rev = yieldVal * priceVal;
+    const laborCost = laborVal * laborRateVal;
+    const fertCost = fertVal * fertRateVal;
+    const profit = rev - costVal - laborCost - fertCost;
+    const cropDisp = getCropDisplayName(c);
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><strong>${escapeHtml(cropDisp)}</strong></td>
-      <td>${c.expected_yield}</td>
-      <td>${c.price.toLocaleString()} ${curr}</td>
-      <td>${c.production_cost.toLocaleString()} ${curr}</td>
-      <td>${c.water_requirement.toLocaleString()}</td>
-      <td>${c.labor_requirement || 0}</td>
-      <td>${c.fertilizer_requirement || 0}</td>
+      <td>${yieldVal}</td>
+      <td>${priceVal.toLocaleString()} ${curr}</td>
+      <td>${costVal.toLocaleString()} ${curr}</td>
+      <td>${waterVal.toLocaleString()}</td>
+      <td>${laborVal}</td>
+      <td>${fertVal}</td>
       <td style="font-weight:800; color:${profit >= 0 ? '#059669' : '#dc2626'}">${profit.toLocaleString('en-US', {maximumFractionDigits:0})} ${curr}</td>
       <td>
         <button class="btn-icon btn-icon-edit" onclick="openCropModal(${idx})" title="Edit Crop">✏️</button>
@@ -675,10 +747,90 @@ function renderResults(res) {
   document.getElementById("kpi-status").textContent = statusStr;
 
   renderSeasonalFieldPlanCards(res);
+  renderMainFinancialProjection(res.financial_projection);
   renderResourceMeters(res);
   renderSuitabilityMatrix(res);
   renderRotationMatrix(res);
   renderBindingConstraints(res.binding_constraints);
+}
+
+// Render Part 1 Financial Projection Section on Main Recommendation Page
+function renderMainFinancialProjection(finData) {
+  const card = document.getElementById("financial-projection-card");
+  const kpiGrid = document.getElementById("main-financial-kpi-grid");
+  const tbody = document.getElementById("main-financial-tbody");
+
+  if (!finData || !finData.farm_summary) {
+    if (card) card.style.display = "none";
+    return;
+  }
+  if (card) card.style.display = "block";
+
+  const curr = getCurrencySymbol();
+  const haUnit = state.lang === "ar" ? "هكتار/فدان" : "ha";
+  const s = finData.farm_summary;
+
+  if (kpiGrid) {
+    kpiGrid.innerHTML = `
+      <div style="background:var(--bg-subtle); padding:12px; border-radius:10px; border:1px solid var(--border-color); text-align:center;">
+        <span style="font-size:0.8rem; color:var(--text-muted); display:block;">${state.lang === 'ar' ? 'إجمالي المساحة' : 'Total Area'}</span>
+        <strong style="font-size:1.1rem; color:var(--primary-nile);">${s.total_area} ${haUnit}</strong>
+      </div>
+      <div style="background:var(--bg-subtle); padding:12px; border-radius:10px; border:1px solid var(--border-color); text-align:center;">
+        <span style="font-size:0.8rem; color:var(--text-muted); display:block;">${state.lang === 'ar' ? 'إجمالي الإيرادات' : 'Gross Revenue'}</span>
+        <strong style="font-size:1.1rem; color:var(--primary-green);">${s.total_expected_revenue.toLocaleString()} ${curr}</strong>
+      </div>
+      <div style="background:var(--bg-subtle); padding:12px; border-radius:10px; border:1px solid var(--border-color); text-align:center;">
+        <span style="font-size:0.8rem; color:var(--text-muted); display:block;">${state.lang === 'ar' ? 'تكلفة الإنتاج' : 'Production Cost'}</span>
+        <strong style="font-size:1.1rem; color:var(--danger-text);">${s.total_production_cost.toLocaleString()} ${curr}</strong>
+      </div>
+      <div style="background:var(--bg-subtle); padding:12px; border-radius:10px; border:1px solid var(--border-color); text-align:center;">
+        <span style="font-size:0.8rem; color:var(--text-muted); display:block;">${state.lang === 'ar' ? 'تكلفة العمالة' : 'Labor Cost'}</span>
+        <strong style="font-size:1.1rem; color:var(--danger-text);">${s.total_labor_cost.toLocaleString()} ${curr}</strong>
+      </div>
+      <div style="background:var(--bg-subtle); padding:12px; border-radius:10px; border:1px solid var(--border-color); text-align:center;">
+        <span style="font-size:0.8rem; color:var(--text-muted); display:block;">${state.lang === 'ar' ? 'تكلفة الأسمدة' : 'Fertilizer Cost'}</span>
+        <strong style="font-size:1.1rem; color:var(--danger-text);">${s.total_fertilizer_cost.toLocaleString()} ${curr}</strong>
+      </div>
+      <div style="background:var(--bg-subtle); padding:12px; border-radius:10px; border:1px solid var(--border-color); text-align:center;">
+        <span style="font-size:0.8rem; color:var(--text-muted); display:block;">${state.lang === 'ar' ? 'إجمالي التكاليف' : 'Total Costs'}</span>
+        <strong style="font-size:1.1rem; color:var(--danger-text);">${s.total_cost.toLocaleString()} ${curr}</strong>
+      </div>
+      <div style="background:var(--gold-bg); padding:12px; border-radius:10px; border:1px solid var(--gold-light); text-align:center;">
+        <span style="font-size:0.8rem; color:var(--gold-accent); display:block; font-weight:700;">${state.lang === 'ar' ? 'صافي الربح المتوقع' : 'Net Profit'}</span>
+        <strong style="font-size:1.2rem; color:var(--primary-nile); font-weight:800;">${s.total_expected_net_profit.toLocaleString()} ${curr}</strong>
+      </div>
+      <div style="background:var(--bg-subtle); padding:12px; border-radius:10px; border:1px solid var(--border-color); text-align:center;">
+        <span style="font-size:0.8rem; color:var(--text-muted); display:block;">${state.lang === 'ar' ? 'هامش الربح' : 'Profit Margin'}</span>
+        <strong style="font-size:1.1rem; color:var(--primary-green);">${s.overall_profit_margin_pct}%</strong>
+      </div>
+    `;
+  }
+
+  if (tbody && finData.field_projections) {
+    tbody.innerHTML = "";
+    Object.entries(finData.field_projections).forEach(([fName, cMap]) => {
+      Object.entries(cMap).forEach(([cName, p]) => {
+        if (p.allocated_area <= 0) return;
+        const cropAr = getCropDisplayName(cName);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>${escapeHtml(fName)}</strong></td>
+          <td><span class="badge badge-info">${escapeHtml(cropAr)}</span></td>
+          <td>${p.allocated_area.toFixed(2)} ${haUnit}</td>
+          <td style="color:var(--primary-green); font-weight:700;">${p.expected_revenue.toLocaleString()} ${curr}</td>
+          <td>${p.production_cost.toLocaleString()} ${curr}</td>
+          <td>${p.labor_cost.toLocaleString()} ${curr}</td>
+          <td>${p.fertilizer_cost.toLocaleString()} ${curr}</td>
+          <td style="color:var(--danger-text); font-weight:700;">${p.total_cost.toLocaleString()} ${curr}</td>
+          <td style="color:var(--primary-nile); font-weight:800;">${p.net_profit.toLocaleString()} ${curr}</td>
+          <td>${p.profit_per_hectare.toLocaleString()} ${curr}/${haUnit}</td>
+          <td style="font-weight:700;">${p.profit_margin_pct}%</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+  }
 }
 
 // Render Seasonal Allocation Plan Cards for Farmer
@@ -1119,3 +1271,442 @@ function escapeHtml(str) {
     "'": '&#039;'
   }[m]));
 }
+
+
+// ==========================================================================
+// INTERNSHIP 4B PHASE 2: MULTI-SEASON CROP ROTATION PLANNER UI LOGIC
+// ==========================================================================
+
+let multiSeasonState = {
+  sessionId: "ms_session_" + Date.now(),
+  candidateCrops: [],
+  currentPreviousCrops: {},
+  waterBudget: 400000,
+  laborBudget: 2500,
+  fertilizerBudget: 15000,
+  currentSeasonName: "Summer",
+  currentPlan: null,
+  step: 1, // 1: Candidate Selection, 2: Season Setup, 3: Season Results
+};
+
+function openMultiSeasonModal() {
+  document.getElementById("multi-season-modal").classList.add("active");
+
+  // Sync initial budgets from main state if not yet configured
+  if (state.water_budget) multiSeasonState.waterBudget = state.water_budget;
+  if (state.labor_budget) multiSeasonState.laborBudget = state.labor_budget;
+  if (state.fertilizer_budget) multiSeasonState.fertilizerBudget = state.fertilizer_budget;
+
+  if (multiSeasonState.step === 1 || multiSeasonState.candidateCrops.length === 0) {
+    renderMultiSeasonStep1();
+  } else if (multiSeasonState.step === 2) {
+    renderMultiSeasonStep2();
+  } else if (multiSeasonState.step === 3 && multiSeasonState.currentPlan) {
+    renderMultiSeasonStep3();
+  } else {
+    renderMultiSeasonStep1();
+  }
+}
+
+function closeMultiSeasonModal() {
+  document.getElementById("multi-season-modal").classList.remove("active");
+}
+
+// STEP 1: Candidate Crop Selection (Selected ONCE at session start)
+function renderMultiSeasonStep1() {
+  multiSeasonState.step = 1;
+  const modalTitle = document.getElementById("ms-modal-title");
+  const modalBody = document.getElementById("ms-modal-body");
+
+  modalTitle.innerHTML = `🌱 الخطوة 1: اختيار المحاصيل المرشحة (مرة واحدة)`;
+
+  // Generate available crops checklist from state
+  const availableCrops = state.crops.length > 0 ? state.crops : [
+    { name: "Wheat" }, { name: "Yellow Corn" }, { name: "Soybean" }, { name: "Tomato" }, { name: "Cotton" }
+  ];
+
+  let cropsChecklistHtml = availableCrops.map((c) => {
+    const isChecked = multiSeasonState.candidateCrops.length === 0 || multiSeasonState.candidateCrops.includes(c.name);
+    const arName = c.name_arabic || c.name;
+    const seasonsStr = (c.allowed_seasons || ["Winter", "Summer"]).join(", ");
+    return `
+      <label class="checkbox-card" style="display:flex; align-items:center; gap:10px; background:var(--bg-subtle); padding:12px; border-radius:10px; border:1px solid var(--border-color); cursor:pointer;">
+        <input type="checkbox" class="ms-candidate-cb" value="${escapeHtml(c.name)}" ${isChecked ? 'checked' : ''} style="width:20px; height:20px; accent-color:var(--primary-green);">
+        <div>
+          <strong style="font-size:1.05rem; color:var(--primary-nile);">${escapeHtml(arName)} (${escapeHtml(c.name)})</strong>
+          <div style="font-size:0.8rem; color:var(--text-muted);">المواسم المتاحة: ${escapeHtml(seasonsStr)}</div>
+        </div>
+      </label>
+    `;
+  }).join("");
+
+  modalBody.innerHTML = `
+    <div style="margin-bottom: 20px;">
+      <p style="font-size:1rem; color:var(--text-muted); margin-bottom:15px;">
+        اختر قائمة المحاصيل التي ترغب بتضمينها في التخطيط للمواسم القادمة. يتم تحديد هذه القائمة <strong>مرة واحدة</strong> وسيتم اعتمادها لكل المواسم التالية تلقائياً (ويمكنك تعديلها عند الحاجة).
+      </p>
+      
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:12px; margin-bottom:24px;">
+        ${cropsChecklistHtml}
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:12px; border-top:1px solid var(--border-color); padding-top:16px;">
+        <button class="btn btn-secondary" onclick="closeMultiSeasonModal()">إلغاء</button>
+        <button class="btn btn-primary" onclick="submitCandidateCrops()" style="background:var(--primary-green);">
+          <span>بدء التخطيط للمواسم القادمة 🚀</span>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function getFarmRequestPayload() {
+  const version = document.getElementById("optimizer-version")
+    ? document.getElementById("optimizer-version").value
+    : "v4";
+  return {
+    version: version,
+    zone: state.zone,
+    season: state.season,
+    water_budget: parseFloat(document.getElementById("budget-water") ? document.getElementById("budget-water").value : state.water_budget) || state.water_budget,
+    labor_budget: parseFloat(document.getElementById("budget-labor") ? document.getElementById("budget-labor").value : state.labor_budget) || state.labor_budget,
+    fertilizer_budget: parseFloat(document.getElementById("budget-fertilizer") ? document.getElementById("budget-fertilizer").value : state.fertilizer_budget) || state.fertilizer_budget,
+    fields: state.fields.map(f => Object.assign({}, f)),
+    crops: state.crops.map(c => Object.assign({}, c)),
+  };
+}
+
+function submitCandidateCrops() {
+  const checkboxes = document.querySelectorAll(".ms-candidate-cb:checked");
+  const selectedCrops = Array.from(checkboxes).map(cb => cb.value);
+
+  if (selectedCrops.length === 0) {
+    alert("يرجى اختيار محصول واحد على الأقل للمتابعة.");
+    return;
+  }
+
+  multiSeasonState.candidateCrops = selectedCrops;
+
+  // Build farm request payload
+  const farmRequest = getFarmRequestPayload();
+
+  // Extract Season 1 recommendation per field
+  const s1Rec = {};
+  if (state.lastResult && state.lastResult.field_allocations) {
+    for (const [fName, allocMap] of Object.entries(state.lastResult.field_allocations)) {
+      let maxArea = 0;
+      let topCrop = null;
+      for (const [cName, ha] of Object.entries(allocMap)) {
+        if (ha > maxArea) {
+          maxArea = ha;
+          topCrop = cName;
+        }
+      }
+      if (topCrop) {
+        s1Rec[fName] = topCrop;
+      }
+    }
+  }
+
+  // Initialize session via API without re-optimizing Season 1
+  fetch("/api/multi-season/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      session_id: multiSeasonState.sessionId,
+      candidate_crops: selectedCrops,
+      season_1_recommendation: s1Rec,
+      current_season_name: state.season,
+      water_budget: farmRequest.water_budget,
+      labor_budget: farmRequest.labor_budget,
+      fertilizer_budget: farmRequest.fertilizer_budget,
+      farm_request: farmRequest,
+    }),
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.detail) {
+        alert("خطأ: " + data.detail);
+        return;
+      }
+      multiSeasonState.currentPreviousCrops = data.current_previous_crops;
+      multiSeasonState.waterBudget = data.current_water_budget;
+      multiSeasonState.laborBudget = data.current_labor_budget;
+      multiSeasonState.fertilizerBudget = data.current_fertilizer_budget;
+
+      // Set currentSeasonName to the current optimizer season so getSeasonDropdownOptions()
+      // correctly offers what comes AFTER it in the Egyptian 3-season cycle
+      multiSeasonState.currentSeasonName = state.season;
+
+      renderMultiSeasonStep2();
+    })
+    .catch(err => {
+      console.error("Error starting multi-season session:", err);
+      renderMultiSeasonStep2();
+    });
+}
+
+// Returns dropdown options for the next season.
+// Auto-cycle is strictly Winter ⇔ Summer.
+// Nili is always shown as an optional 3rd choice but never auto-selected.
+function getSeasonDropdownOptions(lastKnownSeason) {
+  const nextAuto = (lastKnownSeason === "Winter") ? "Summer" : "Winter";
+  const seasonAr = { Winter: "شتوي (Winter)", Summer: "صيفي (Summer)", Nili: "نيلي (Nili)" };
+  return [
+    { value: nextAuto, label: seasonAr[nextAuto] },  // always auto-selected
+    { value: nextAuto === "Summer" ? "Winter" : "Summer", label: seasonAr[nextAuto === "Summer" ? "Winter" : "Summer"] },
+    { value: "Nili",    label: seasonAr["Nili"] },   // always available, never auto-selected
+  ];
+}
+
+// STEP 2: Season Planning & Budget Carry-Forward View
+function renderMultiSeasonStep2() {
+  multiSeasonState.step = 2;
+  const modalTitle = document.getElementById("ms-modal-title");
+  const modalBody = document.getElementById("ms-modal-body");
+
+  const seasonNum = (multiSeasonState.seasonHistory ? multiSeasonState.seasonHistory.length : 0) + 2;
+  modalTitle.innerHTML = `🗓️ الخطوة 2: تخطيط الموسم القادم (موسم ${seasonNum})`;
+
+  // Previous crops list
+  let prevCropsHtml = "";
+  if (state.fields && state.fields.length > 0) {
+    prevCropsHtml = state.fields.map(f => {
+      const prevC = multiSeasonState.currentPreviousCrops[f.name] || f.previous_crop || "لا يوجد (أرض بور)";
+      const arCrop = getCropDisplayName(prevC);
+      return `
+        <div style="background:var(--bg-card); padding:10px 14px; border-radius:8px; border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <strong>📍 ${escapeHtml(f.name)}</strong>
+            <span style="font-size:0.85rem; color:var(--text-muted);">(${f.area} هكتار)</span>
+          </div>
+          <div style="color:var(--primary-nile); font-weight:700;">
+            المحصول السابق: <span style="color:var(--gold-accent);">${escapeHtml(arCrop)}</span>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  modalBody.innerHTML = `
+    <div style="display:flex; flex-direction:column; gap:20px;">
+      
+      <!-- Explicit Future Soil Notice Banner (User Rule 3) -->
+      <div style="background:#fffbeb; border:1px solid #fcd34d; padding:12px 16px; border-radius:10px; color:#92400e; font-weight:700; font-size:0.95rem; display:flex; align-items:center; gap:10px;">
+        <span style="font-size:1.2rem;">⚠️</span>
+        <span>المواسم المستقبلية: لا يتم استخدام خصائص التربة الحالية لعدم توفر قياسات مستقبلية.</span>
+      </div>
+
+      <div style="background:var(--bg-subtle); padding:16px; border-radius:12px; border:1px solid var(--border-color);">
+        <h4 style="color:var(--primary-nile); margin-bottom:12px;">📅 الموسم القادم المحدد تلقائياً</h4>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:start;">
+          <div>
+            <label style="display:block; font-weight:700; margin-bottom:6px;">اختر الموسم القادم:</label>
+            <select id="ms-season-select" class="select-input" style="width:100%;">
+              ${(() => { const opts = getSeasonDropdownOptions(multiSeasonState.currentSeasonName); return opts.map((o, i) => `<option value="${o.value}" ${i === 0 ? 'selected' : ''}>${o.label}</option>`).join(''); })()}
+            </select>
+            <p style="margin-top:6px; font-size:0.8rem; color:var(--text-muted);">&#x21BA; الدورة التلقائية: شتوي &#x2194; صيفي &nbsp;&bull;&nbsp; نيلي: اختياري</p>
+          </div>
+          <div style="background:var(--gold-bg); padding:10px 14px; border-radius:8px; border:1px solid var(--gold-light); font-size:0.85rem; color:var(--text-muted);">
+            ℹ️ المحاصيل المرشحة: <strong>${multiSeasonState.candidateCrops.map(c => getCropDisplayName(c)).join(", ")}</strong>
+            <button onclick="renderMultiSeasonStep1()" style="border:none; background:none; color:var(--primary-green); cursor:pointer; text-decoration:underline; font-weight:700; margin-right:6px;">(تعديل)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Previous Crops History Preview -->
+      <div style="background:var(--bg-subtle); padding:16px; border-radius:12px; border:1px solid var(--border-color);">
+        <h4 style="color:var(--primary-nile); margin-bottom:10px;">📜 سجل المحصول السابق لكل أرض (تلقائي من الخطة السابقة)</h4>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          ${prevCropsHtml}
+        </div>
+      </div>
+
+      <!-- Budget Carry-Forward & Edit Controls -->
+      <div style="background:var(--bg-subtle); padding:16px; border-radius:12px; border:1px solid var(--border-color);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h4 style="color:var(--primary-nile);">💧 الميزانية المنقولة تلقائياً من الموسم السابق</h4>
+          <span style="font-size:0.8rem; background:var(--success-bg); color:var(--success-text); padding:4px 10px; border-radius:20px; font-weight:700;">استخدام ميزانية الموسم السابق (متاح التعديل)</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+          <div>
+            <label style="display:block; font-size:0.85rem; font-weight:700;">💧 ميزانية المياه (م³):</label>
+            <input type="number" id="ms-water-budget" class="text-input" value="${multiSeasonState.waterBudget}" style="width:100%;">
+          </div>
+          <div>
+            <label style="display:block; font-size:0.85rem; font-weight:700;">👷 ساعات العمل (ساعة):</label>
+            <input type="number" id="ms-labor-budget" class="text-input" value="${multiSeasonState.laborBudget}" style="width:100%;">
+          </div>
+          <div>
+            <label style="display:block; font-size:0.85rem; font-weight:700;">🧪 كمية السماد (كجم):</label>
+            <input type="number" id="ms-fert-budget" class="text-input" value="${multiSeasonState.fertilizerBudget}" style="width:100%;">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color); padding-top:16px;">
+        <button class="btn btn-secondary" onclick="renderMultiSeasonStep1()">← التعديل في القائمة</button>
+        <button class="btn btn-primary" onclick="executeMultiSeasonPlan()" style="background:linear-gradient(135deg, #1b4332, #2d6a4f); font-weight:700; padding:12px 24px;">
+          <span>بدء التخطيط للموسم القادم 🚀</span>
+        </button>
+      </div>
+
+    </div>
+  `;
+}
+
+function executeMultiSeasonPlan() {
+  // Read season from the dropdown (farmer may override the default)
+  const seasonSelect = document.getElementById("ms-season-select");
+  const seasonName = seasonSelect ? seasonSelect.value : multiSeasonState.currentSeasonName;
+
+  const waterBudget = parseFloat(document.getElementById("ms-water-budget").value) || multiSeasonState.waterBudget;
+  const laborBudget = parseFloat(document.getElementById("ms-labor-budget").value) || multiSeasonState.laborBudget;
+  const fertBudget = parseFloat(document.getElementById("ms-fert-budget").value) || multiSeasonState.fertilizerBudget;
+
+  fetch("/api/multi-season/next-season", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      session_id: multiSeasonState.sessionId,
+      season_name: seasonName,
+      water_budget: waterBudget,
+      labor_budget: laborBudget,
+      fertilizer_budget: fertBudget,
+    }),
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.detail) {
+        alert("خطأ: " + data.detail);
+        return;
+      }
+
+      multiSeasonState.currentPlan = data;
+      multiSeasonState.currentPreviousCrops = data.next_previous_crops;
+      multiSeasonState.waterBudget = data.water_budget;
+      multiSeasonState.laborBudget = data.labor_budget;
+      multiSeasonState.fertilizerBudget = data.fertilizer_budget;
+
+      if (!multiSeasonState.seasonHistory) multiSeasonState.seasonHistory = [];
+      multiSeasonState.seasonHistory.push(data);
+
+      // Only advance the W⇔S tracker when a main season was planned.
+      // If farmer chose Nili, keep currentSeasonName unchanged so the next
+      // dropdown still auto-selects the correct alternating main season.
+      if (seasonName !== "Nili") {
+        multiSeasonState.currentSeasonName = seasonName;
+      }
+
+      renderMultiSeasonStep3();
+    })
+    .catch(err => {
+      console.error("Error generating season plan:", err);
+      alert("حدث خطأ أثناء الاتصال بالمخدم لتوليد الخطة.");
+    });
+}
+
+// STEP 3: Season Results & Financial Projection View
+function renderMultiSeasonStep3() {
+  multiSeasonState.step = 3;
+  const modalTitle = document.getElementById("ms-modal-title");
+  const modalBody = document.getElementById("ms-modal-body");
+  const plan = multiSeasonState.currentPlan;
+
+  if (!plan) return;
+
+  modalTitle.innerHTML = `✅ نتيجة تخطيط الموسم: ${escapeHtml(plan.season_name)} (موسم رقم ${plan.season_number})`;
+
+  // Field allocation rows
+  let allocRowsHtml = "";
+  for (const [fName, cMap] of Object.entries(plan.crop_allocation)) {
+    const finFieldMap = plan.field_financials[fName] || {};
+    for (const [cName, ha] of Object.entries(cMap)) {
+      if (ha <= 0) continue;
+      const fin = finFieldMap[cName] || {};
+      const arCrop = getCropDisplayName(cName);
+      const prevC = getCropDisplayName(plan.previous_crops[fName] || "لا يوجد");
+
+      allocRowsHtml += `
+        <tr style="border-bottom:1px solid var(--border-color);">
+          <td style="padding:10px; font-weight:700;">${escapeHtml(fName)}</td>
+          <td style="padding:10px; color:var(--text-muted);">${escapeHtml(prevC)}</td>
+          <td style="padding:10px; font-weight:700; color:var(--primary-nile);">${escapeHtml(arCrop)}</td>
+          <td style="padding:10px; text-align:center;">${ha.toFixed(2)} هكتار</td>
+          <td style="padding:10px; text-align:center; color:var(--primary-green); font-weight:700;">${(fin.expected_revenue || 0).toLocaleString()} EGP</td>
+          <td style="padding:10px; text-align:center; color:var(--danger-text);">${(fin.total_cost || 0).toLocaleString()} EGP</td>
+          <td style="padding:10px; text-align:center; color:var(--primary-nile); font-weight:800;">${(fin.net_profit || 0).toLocaleString()} EGP</td>
+          <td style="padding:10px; text-align:center; font-weight:700;">${(fin.profit_margin * 100 || 0).toFixed(1)}%</td>
+        </tr>
+      `;
+    }
+  }
+
+  const finSum = plan.financial_summary || {};
+
+  modalBody.innerHTML = `
+    <div style="display:flex; flex-direction:column; gap:20px;">
+      
+      <!-- Financial & Resource Summary KPI Grid -->
+      <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px;">
+        <div style="background:var(--gold-bg); border:1px solid var(--gold-light); padding:12px; border-radius:10px; text-align:center;">
+          <div style="font-size:0.8rem; color:var(--gold-accent); font-weight:700;">إجمالي الربح الصافي</div>
+          <div style="font-size:1.3rem; font-weight:800; color:var(--primary-nile);">${(finSum.total_expected_net_profit || 0).toLocaleString()} EGP</div>
+        </div>
+        <div style="background:var(--bg-subtle); border:1px solid var(--border-color); padding:12px; border-radius:10px; text-align:center;">
+          <div style="font-size:0.8rem; color:var(--text-muted);">إجمالي الإيرادات</div>
+          <div style="font-size:1.1rem; font-weight:700;">${(finSum.total_expected_revenue || 0).toLocaleString()} EGP</div>
+        </div>
+        <div style="background:var(--bg-subtle); border:1px solid var(--border-color); padding:12px; border-radius:10px; text-align:center;">
+          <div style="font-size:0.8rem; color:var(--text-muted);">إجمالي التكاليف</div>
+          <div style="font-size:1.1rem; font-weight:700; color:var(--danger-text);">${(finSum.total_cost || 0).toLocaleString()} EGP</div>
+        </div>
+        <div style="background:var(--bg-subtle); border:1px solid var(--border-color); padding:12px; border-radius:10px; text-align:center;">
+          <div style="font-size:0.8rem; color:var(--text-muted);">هامش الربح الإجمالي</div>
+          <div style="font-size:1.1rem; font-weight:700; color:var(--primary-green);">${(finSum.overall_profit_margin_pct || 0)}%</div>
+        </div>
+      </div>
+
+      <!-- Allocations Table -->
+      <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; padding:16px;">
+        <h4 style="color:var(--primary-nile); margin-bottom:12px;">📍 التوزيع الزراعي الموصى به والأرباح التقديرية للموسم</h4>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+            <thead>
+              <tr style="background:var(--bg-subtle); text-align:right;">
+                <th style="padding:10px;">الأرض</th>
+                <th style="padding:10px;">المحصول السابق</th>
+                <th style="padding:10px;">المحصول الموصى به</th>
+                <th style="padding:10px; text-align:center;">المساحة</th>
+                <th style="padding:10px; text-align:center;">الإيراد المتوقع</th>
+                <th style="padding:10px; text-align:center;">إجمالي التكلفة</th>
+                <th style="padding:10px; text-align:center;">صافي الربح</th>
+                <th style="padding:10px; text-align:center;">هامش الربح</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allocRowsHtml || '<tr><td colspan="8" style="text-align:center; padding:20px;">لم يتم تخصيص محاصيل لمحدودية الميزانية.</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bottom Action Bar -->
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color); padding-top:16px;">
+        <button class="btn btn-secondary" onclick="renderMultiSeasonStep1()">تعديل المحاصيل المرشحة ✏️</button>
+        <button class="btn btn-primary" onclick="advanceToFollowingSeason()" style="background:linear-gradient(135deg, #1b4332, #2d6a4f); font-weight:800; padding:12px 24px;">
+          <span>التخطيط للموسم التالي ➔</span>
+        </button>
+      </div>
+
+    </div>
+  `;
+}
+
+function advanceToFollowingSeason() {
+  // currentSeasonName already records the season just planned. The setup
+  // renderer derives and selects the immediately following season from it.
+  renderMultiSeasonStep2();
+}
+

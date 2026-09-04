@@ -53,11 +53,16 @@ class CropMixOptimizerV4:
         self.soil_engine = SoilSuitabilityEngine()
         self.rotation_loader = rotation_loader or RotationMatrixLoader(excel_path=rotation_excel_path)
 
-    def solve(self, farm_inputs: FarmInputs) -> OptimizationResultV4:
+    def solve(
+        self,
+        farm_inputs: FarmInputs,
+        apply_soil_suitability: bool = True,
+    ) -> OptimizationResultV4:
         """Formulate and solve field-level crop mix optimization problem with crop rotation constraints.
 
         Args:
             farm_inputs: Input dataclass containing fields (with previous_crop), crops, and budgets.
+            apply_soil_suitability: Whether soil suitability constraint is enforced (True for current season, False for future seasons).
 
         Returns:
             OptimizationResultV4 with allocation details, soil & rotation matrices, and financial totals.
@@ -74,7 +79,10 @@ class CropMixOptimizerV4:
         self.rotation_loader.validate_optimization_crops(crop_names)
 
         # 1. Compute Matrices
-        soil_matrix = self.soil_engine.calculate_suitability_matrix(farm_inputs)
+        if apply_soil_suitability:
+            soil_matrix = self.soil_engine.calculate_suitability_matrix(farm_inputs)
+        else:
+            soil_matrix = {(f, c): 1 for f in field_names for c in crop_names}
 
         rotation_matrix: Dict[Tuple[str, str], int] = {}
         field_prev_crops: Dict[str, Optional[str]] = {}
@@ -126,12 +134,13 @@ class CropMixOptimizerV4:
 
         model.field_area_con = pyo.Constraint(model.FIELDS, rule=field_area_rule)
 
-        # (b) Soil Suitability Constraint
-        def soil_suitability_rule(m, f, c):
-            is_fit = soil_matrix.get((f, c), 0)
-            return m.x[f, c] <= is_fit * field_areas[f]
+        # (b) Soil Suitability Constraint (only if apply_soil_suitability is True)
+        if apply_soil_suitability:
+            def soil_suitability_rule(m, f, c):
+                is_fit = soil_matrix.get((f, c), 0)
+                return m.x[f, c] <= is_fit * field_areas[f]
 
-        model.soil_suitability_con = pyo.Constraint(model.FIELDS, model.CROPS, rule=soil_suitability_rule)
+            model.soil_suitability_con = pyo.Constraint(model.FIELDS, model.CROPS, rule=soil_suitability_rule)
 
         # (c) Crop Rotation Constraint
         def rotation_suitability_rule(m, f, c):

@@ -15,8 +15,11 @@ def test_get_preset_farm():
     assert "water_budget" in data
     assert "labor_budget" in data
     assert "fertilizer_budget" in data
-    assert len(data["crops"]) >= 3
+    assert len(data["crops"]) == 5
     assert len(data["fields"]) >= 3
+    crop_names = [c["name"] for c in data["crops"]]
+    for expected in ["Wheat", "Yellow Corn", "Soybean", "Tomato", "Cotton"]:
+        assert expected in crop_names
 
 
 def test_optimize_v3_endpoint():

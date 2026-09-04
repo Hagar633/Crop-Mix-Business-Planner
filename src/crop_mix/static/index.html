@@ -347,8 +347,8 @@
       <div class="plan-hero-card">
         <div class="plan-hero-info">
           <span class="status-pill success" id="status-pill">تم حساب الخطة بنجاح</span>
-          <h2 data-i18n="res.planMainTitle">الخطة الزراعية التقديرية للمواسم القادمة</h2>
-          <p data-i18n="res.planMainSub">خطة موزعة على أراضيك بناءً على أعلى ربحية صافية واشتراطات الدورة الزراعية وملاءمة التربة</p>
+          <h2 data-i18n="res.planMainTitle">توصية الخطة الزراعية للموسم الحالي</h2>
+          <p data-i18n="res.planMainSub">خطة موزعة على أراضيك بناءً على خصائص التربة الحالية والدورة الزراعية وأعلى ربحية صافية</p>
         </div>
         <div class="plan-hero-action">
           <button class="btn btn-secondary" onclick="window.print()">
@@ -373,7 +373,7 @@
           <div class="kpi-content">
             <span class="kpi-label" data-i18n="kpi.revenue">إجمالي الإيرادات المتوقعة</span>
             <div class="kpi-value" id="kpi-revenue">0 EGP</div>
-            <span class="kpi-sub" data-i18n="kpi.revenueSub">قيمة بيع المحاصيل</span>
+            <span class="kpi-sub" data-i18n="kpi.revenueSub">قيمة بيع المحاصيل الإجمالية</span>
           </div>
         </div>
 
@@ -407,6 +407,46 @@
 
         <div id="field-allocations-container" class="field-alloc-list">
           <!-- Dynamically populated seasonal plan cards -->
+        </div>
+      </section>
+
+      <!-- FINANCIAL PROJECTION SECTION (PART 1) -->
+      <section class="card" id="financial-projection-card">
+        <div class="card-header">
+          <div>
+            <h2>📊 <span data-i18n="res.finTitle">التوقعات المالية</span></h2>
+            <p class="panel-sub" data-i18n="res.finSub">الملخص المالي الشامل وتكلفة الإنتاج والربحية حسب المحرك المالي 4B</p>
+          </div>
+        </div>
+
+        <!-- Farm Financial KPI Breakdown Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px;" id="main-financial-kpi-grid">
+          <!-- Dynamically populated from FinancialProjectionResult -->
+        </div>
+
+        <!-- Per Field/Crop Financial Breakdown Table -->
+        <div class="table-wrapper">
+          <h4 style="margin-bottom: 10px; color: var(--primary-nile);" data-i18n="res.finTableTitle">التفاصيل المالية الموزعة على الحقول والمحاصيل</h4>
+          <table class="data-table" id="main-financial-table">
+            <thead>
+              <tr>
+                <th data-i18n="th.finField">اسم الحقل</th>
+                <th data-i18n="th.finCrop">اسم المحصول (بالعربي)</th>
+                <th data-i18n="th.finArea">المساحة</th>
+                <th data-i18n="th.finRev">الإيرادات المتوقعة</th>
+                <th data-i18n="th.finProdCost">تكلفة الإنتاج</th>
+                <th data-i18n="th.finLaborCost">تكلفة العمالة</th>
+                <th data-i18n="th.finFertCost">تكلفة الأسمدة</th>
+                <th data-i18n="th.finTotCost">إجمالي التكلفة</th>
+                <th data-i18n="th.finNetProfit">صافي الربح</th>
+                <th data-i18n="th.finProfitPerHa">الربح لكل هكتار</th>
+                <th data-i18n="th.finMargin">هامش الربح</th>
+              </tr>
+            </thead>
+            <tbody id="main-financial-tbody">
+              <!-- Dynamically populated from FinancialProjectionResult -->
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -449,6 +489,19 @@
           </div>
         </div>
       </details>
+
+      <!-- MULTI-SEASON PLANNING CTA CARD (AT VERY BOTTOM OF RESULTS PAGE) -->
+      <div class="card" style="background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%); color: white; text-align: center; padding: 32px 24px; border-radius: 16px; margin-top: 24px; box-shadow: 0 10px 25px rgba(27, 67, 50, 0.15);">
+        <h3 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 10px; color: #ffffff;">
+          📅 <span data-i18n="res.nextSeasonSectionTitle">التخطيط للمواسم القادمة (التخطيط التتابعي والدورة الزراعية)</span>
+        </h3>
+        <p style="color: #d8f3dc; font-size: 1.02rem; max-width: 800px; margin: 0 auto 20px auto; line-height: 1.6;" data-i18n="res.nextSeasonSectionSub">
+          قم بالتخطيط للمواسم القادمة موسم بموسم بناءً على المحاصيل الموصى بها في هذا الموسم ودورة زراعية مستمرة بدون افتراضات تربة مستقبلية.
+        </p>
+        <button class="btn" onclick="openMultiSeasonModal()" style="background: #b07d3b; color: white; font-weight: 800; font-size: 1.1rem; padding: 14px 32px; border: none; border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+          <span>📅</span> <span data-i18n="res.planNextSeason">التخطيط للموسم القادم</span>
+        </button>
+      </div>
 
     </main>
 
@@ -607,6 +660,19 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- MULTI-SEASON PLANNER MODAL -->
+  <div class="modal-backdrop" id="multi-season-modal">
+    <div class="modal modal-lg">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1b4332, #2d6a4f); color: white;">
+        <h3 id="ms-modal-title">📅 التخطيط التتابعي للمواسم القادمة</h3>
+        <button class="modal-close" onclick="closeMultiSeasonModal()" style="color:white;">&times;</button>
+      </div>
+      <div class="modal-body" id="ms-modal-body">
+        <!-- Content dynamically rendered by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=4.1"></script>
 </body>
 </html>

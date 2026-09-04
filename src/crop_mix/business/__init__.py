@@ -6,10 +6,18 @@ from crop_mix.business.financial_projection import (
     FarmFinancialSummary,
     FinancialProjectionResult,
 )
+from crop_mix.business.multi_season_planner import (
+    MultiSeasonPlanner,
+    SeasonPlan,
+    MultiSeasonPlan,
+)
 
 __all__ = [
     "FinancialProjection",
     "FieldCropFinancial",
     "FarmFinancialSummary",
     "FinancialProjectionResult",
+    "MultiSeasonPlanner",
+    "SeasonPlan",
+    "MultiSeasonPlan",
 ]

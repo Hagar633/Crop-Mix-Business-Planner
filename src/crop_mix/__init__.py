@@ -6,6 +6,12 @@ from crop_mix.models.optimizer_v3 import CropMixOptimizerV3, OptimizationResultV
 from crop_mix.models.optimizer_v4 import CropMixOptimizerV4, OptimizationResultV4
 from crop_mix.models.soil_suitability import SoilSuitabilityEngine
 from crop_mix.data.rotation_loader import RotationMatrixLoader
+from crop_mix.data.crop_seasons import (
+    get_allowed_seasons,
+    get_arabic_crop_name,
+    get_canonical_crop_name,
+    is_crop_allowed_in_season,
+)
 from crop_mix.data.example_data import (
     FarmInputs,
     CropParameters,
@@ -18,6 +24,11 @@ from crop_mix.business.financial_projection import (
     FieldCropFinancial,
     FarmFinancialSummary,
     FinancialProjectionResult,
+)
+from crop_mix.business.multi_season_planner import (
+    MultiSeasonPlanner,
+    SeasonPlan,
+    MultiSeasonPlan,
 )
 
 __all__ = [
@@ -40,4 +51,11 @@ __all__ = [
     "FieldCropFinancial",
     "FarmFinancialSummary",
     "FinancialProjectionResult",
+    "MultiSeasonPlanner",
+    "SeasonPlan",
+    "MultiSeasonPlan",
+    "get_allowed_seasons",
+    "get_arabic_crop_name",
+    "get_canonical_crop_name",
+    "is_crop_allowed_in_season",
 ]
