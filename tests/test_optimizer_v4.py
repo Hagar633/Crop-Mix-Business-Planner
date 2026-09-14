@@ -30,10 +30,12 @@ def test_no_previous_crop_unconstrained_by_rotation():
     result = optimizer.solve(farm_inputs)
 
     assert result.is_feasible
-    assert result.field_previous_crops["Field_East"] is None
-    # For Field_East, all crops should have rotation_suitability == 1
+    field_east_key = [f for f in result.field_previous_crops.keys() if "الشرقية" in f or "East" in f][0]
+    assert result.field_previous_crops[field_east_key] is None
+    # For this field, all crops should have rotation_suitability == 1
     for crop in farm_inputs.crops.keys():
-        assert result.rotation_suitability_matrix[("Field_East", crop)] == 1
+        assert result.rotation_suitability_matrix[(field_east_key, crop)] == 1
+
 
 
 def test_annual_to_perennial_disallowed_in_lp_solve():
@@ -150,9 +152,11 @@ def test_independent_per_field_previous_crops():
     result = optimizer.solve(farm)
 
     assert result.is_feasible
-    assert result.field_previous_crops["Field_North"] == "Wheat"
-    assert result.field_previous_crops["Field_South"] == "Soybean"
-    assert result.field_previous_crops["Field_East"] is None
+    assert result.is_feasible
+    assert result.field_previous_crops["حوض الشمالي"] == "Wheat"
+    assert result.field_previous_crops["حوض القبلي"] == "Soybean"
+    assert result.field_previous_crops["حوض الشرقية"] is None
+
 
 
 def test_infeasible_scenario_handling():

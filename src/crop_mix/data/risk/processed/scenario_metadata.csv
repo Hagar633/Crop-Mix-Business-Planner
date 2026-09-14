@@ -1,0 +1,3 @@
+scenario_id,scenario_name,probability,category,severity,source,method,base_year,stress_year,base_price_egp,stress_price_egp,fertilizer_cost_multiplier
+input_inflation,Input Cost Inflation,,Cost,Medium,Egyptian annual average fertilizer prices,Highest observed Price_With_Increase_EGP; short historical calibration,2021,2025,6800.00000000,24500.00000000,3.60294118
+market_downturn,Market Price Downturn,0.153846153846,Market,High,"FAOSTAT Agricultural Producer Prices, Egypt",Bottom 10% of common-year median normalized price index; 13 eligible years,,,,,

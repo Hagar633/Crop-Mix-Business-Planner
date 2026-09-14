@@ -55,7 +55,7 @@
         </div>
 
         <div class="hero-image-card">
-          <img src="images/4548ea71353ac47603509bfaa7aaf4b8.jpg" alt="الفلاح المصري والمحاصيل" class="hero-img">
+          <img src="/static/images/4548ea71353ac47603509bfaa7aaf4b8.jpg" alt="الفلاح المصري والمحاصيل" class="hero-img">
           <div class="hero-img-badge">
             🇪🇬 الدورة الزراعية الذكية
           </div>
@@ -72,7 +72,7 @@
       <div class="features-grid">
         <div class="feature-card">
           <div class="feature-img-wrapper">
-            <img src="images/agrii.webp" alt="الدورة الزراعية" class="feature-img">
+            <img src="/static/images/agrii.webp" alt="الدورة الزراعية" class="feature-img">
             <span class="feature-badge">مصفوفة 53 محصولاً</span>
           </div>
           <div class="feature-body">
@@ -86,7 +86,7 @@
 
         <div class="feature-card">
           <div class="feature-img-wrapper">
-            <img src="images/pngtree-aerial-photograph-of-green-agricultural-plots-with-vacant-land-waiting-to-image_15688971.jpg" alt="الميزانية والمياه" class="feature-img">
+            <img src="/static/images/pngtree-aerial-photograph-of-green-agricultural-plots-with-vacant-land-waiting-to-image_15688971.jpg" alt="الميزانية والمياه" class="feature-img">
             <span class="feature-badge">EGP</span>
           </div>
           <div class="feature-body">
@@ -100,7 +100,7 @@
 
         <div class="feature-card">
           <div class="feature-img-wrapper">
-            <img src="images/pngtree-palm-trees-in-the-fertile-nile-river-valley-egypt-agriculture-and-image_16333770.jpg" alt="ملائمة التربة" class="feature-img">
+            <img src="/static/images/pngtree-palm-trees-in-the-fertile-nile-river-valley-egypt-agriculture-and-image_16333770.jpg" alt="ملائمة التربة" class="feature-img">
             <span class="feature-badge">pH & EC</span>
           </div>
           <div class="feature-body">
@@ -147,7 +147,7 @@
     </header>
 
     <main class="main-container">
-      
+
       <!-- Stepper Progress Header -->
       <div class="input-steps-header">
         <div class="step-indicator active">
@@ -193,19 +193,38 @@
           </div>
           <div class="input-group">
             <label for="budget-labor">
-              <span>👷 <span data-i18n="step1.laborLabel">ساعات العمل</span></span>
+              <span>👷 <span data-i18n="step1.laborLabel">ساعات العمل المتاحة</span></span>
               <span class="unit">(ساعة)</span>
             </label>
             <input type="number" id="budget-labor" value="2500" min="0" step="50">
           </div>
           <div class="input-group">
             <label for="budget-fertilizer">
-              <span>🧪 <span data-i18n="step1.fertLabel">كمية السماد</span></span>
+              <span>🧪 <span data-i18n="step1.fertLabel">كمية السماد المتاحة</span></span>
               <span class="unit">(كجم)</span>
             </label>
             <input type="number" id="budget-fertilizer" value="15000" min="0" step="500">
           </div>
         </div>
+
+        <!-- Global Farm Cost Rates -->
+        <div class="budget-grid" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0, 0, 0, 0.1);">
+          <div class="input-group">
+            <label for="global-labor-rate">
+              <span>💵 <span data-i18n="step1.laborRateLabel">أجرة ساعة العمل للمزرعة</span></span>
+              <span class="unit">(EGP / ساعة)</span>
+            </label>
+            <input type="number" id="global-labor-rate" value="0" min="0" step="5" placeholder="مثال: 80">
+          </div>
+          <div class="input-group">
+            <label for="global-fertilizer-rate">
+              <span>💰 <span data-i18n="step1.fertRateLabel">سعر كيلو السماد للمزرعة</span></span>
+              <span class="unit">(EGP / كجم)</span>
+            </label>
+            <input type="number" id="global-fertilizer-rate" value="0" min="0" step="1" placeholder="مثال: 15">
+          </div>
+        </div>
+
         <div class="budget-grid" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0, 0, 0, 0.1);">
           <div class="input-group">
             <label for="farm-zone">
@@ -351,6 +370,9 @@
           <p data-i18n="res.planMainSub">خطة موزعة على أراضيك بناءً على خصائص التربة الحالية والدورة الزراعية وأعلى ربحية صافية</p>
         </div>
         <div class="plan-hero-action">
+          <button class="btn btn-primary" onclick="openRiskAnalysis()">
+            <span>⚠️</span> <span data-i18n="risk.openBtn">تحليل المخاطر</span>
+          </button>
           <button class="btn btn-secondary" onclick="window.print()">
             <span>🖨️</span> <span data-i18n="res.printBtn">طباعة الخطة</span>
           </button>
@@ -395,6 +417,21 @@
           </div>
         </div>
       </div>
+
+      <!-- AI EXPLANATION CARD -->
+      <section class="card ai-explanation-card" id="ai-explanation-card" style="margin-bottom: 24px; border: 1px solid rgba(16, 185, 129, 0.3); background: linear-gradient(135deg, rgba(240, 253, 244, 0.6) 0%, rgba(255, 255, 255, 0.9) 100%);">
+        <div class="card-header" style="border-bottom: 1px solid rgba(16, 185, 129, 0.15); padding-bottom: 12px;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #065f46;">🤖 <span data-i18n="ai.title">التفسير الذكي للخطة الزراعية</span></h2>
+            <p class="panel-sub" data-i18n="ai.sub" style="color: #047857;">تحليل شامل يوضح سبب اختيار هذا التوزيع بالتحديد وكيفية تعظيم الربح الصافي</p>
+          </div>
+          <span class="status-pill success" id="ai-provider-badge" style="font-size: 0.8rem;">Gemini AI</span>
+        </div>
+        <div class="ai-body" id="ai-explanation-content" style="padding: 16px; font-size: 0.95rem; line-height: 1.7; color: #1f2937;">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
 
       <!-- PRIMARY RESULT: SEASONAL FIELD ALLOCATION CARDS -->
       <section class="card">
@@ -511,6 +548,38 @@
   </div>
 
 
+  <!-- VIEW 4: CVaR RISK ANALYSIS -->
+  <div id="page-risk-analysis" class="page-view">
+    <header class="app-header">
+      <div class="header-container">
+        <div class="brand" onclick="navigateTo('landing')" style="cursor:pointer;">
+          <div class="brand-icon">🌾</div>
+          <div>
+            <h1>CropMix <span class="brand-badge-egypt" data-i18n="risk.headerBadge">تحليل المخاطر</span></h1>
+            <p class="brand-tagline" data-i18n="risk.headerTagline">مقارنة الخطط حسب الربحية والتعرض للمخاطر</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-outline" onclick="navigateTo('optimizer-results')"><span>←</span> <span data-i18n="risk.backBtn">العودة للخطة</span></button>
+          <button class="btn btn-secondary" onclick="navigateTo('landing')"><span>🏠</span> <span data-i18n="nav.home">الرئيسية</span></button>
+          <button class="btn-lang" onclick="toggleLanguage()"><span>🌐</span> <span class="lang-text-btn">English</span></button>
+        </div>
+      </div>
+    </header>
+    <main class="main-container risk-analysis-container">
+      <section class="card risk-intro-card"><div><span class="status-pill" id="risk-status-pill" data-i18n="risk.statusReady">جاهز لتحليل المخاطر</span><h2 data-i18n="risk.title">تحليل المخاطر باستخدام CVaR</h2><p class="panel-sub" data-i18n="risk.subtitle">قارن بين ثلاث استراتيجيات زراعية عبر سيناريوهات السوق والإنتاج المحتملة.</p></div><button id="risk-run-analysis" class="btn btn-primary" onclick="runRiskAnalysis()"><span>📊</span> <span data-i18n="risk.runBtn">تشغيل تحليل المخاطر</span></button></section>
+      <div id="risk-loading-state" class="card risk-state" hidden><span>⏳</span><strong data-i18n="risk.loading">جاري تحليل السيناريوهات...</strong></div>
+      <div id="risk-empty-state" class="card risk-state" hidden><span>📋</span><strong data-i18n="risk.empty">لا توجد نتائج مخاطر بعد. شغّل التحليل لعرض المقارنة.</strong></div>
+      <div id="risk-error-state" class="card risk-state risk-state-error" hidden><span>⚠️</span><strong id="risk-error-message" data-i18n="risk.error">تعذر تحميل تحليل المخاطر.</strong></div>
+      <section class="card risk-strategies-card"><div class="panel-header"><div><h3>🎯 <span data-i18n="risk.strategiesTitle">استراتيجيات التخطيط</span></h3><p class="panel-sub" data-i18n="risk.strategiesSub">اختر استراتيجية لعرض مؤشرات المخاطر والنتائج الخاصة بها.</p></div><label class="risk-selector-label" for="risk-strategy-selector" data-i18n="risk.selectorLabel">الاستراتيجية الحالية</label><select id="risk-strategy-selector" class="select-input risk-strategy-selector"><option value="max_profit" data-i18n="risk.maxProfit">أقصى ربح</option><option value="balanced" selected data-i18n="risk.balanced">متوازن</option><option value="risk_aware" data-i18n="risk.riskAware">واعٍ للمخاطر</option></select></div><div id="risk-strategy-cards" class="risk-strategy-grid"><article class="risk-strategy-card" data-risk-strategy="max_profit"><span class="risk-strategy-badge">MAX</span><h4 data-i18n="risk.maxProfit">أقصى ربح</h4><p data-i18n="risk.maxProfitDesc">يركز على تعظيم الربح المتوقع.</p><strong class="risk-strategy-profit" data-risk-field="expected_profit">—</strong></article><article class="risk-strategy-card is-selected" data-risk-strategy="balanced"><span class="risk-strategy-badge">BAL</span><h4 data-i18n="risk.balanced">متوازن</h4><p data-i18n="risk.balancedDesc">يوازن بين العائد وحماية الجانب الهبوطي.</p><strong class="risk-strategy-profit" data-risk-field="expected_profit">—</strong></article><article class="risk-strategy-card" data-risk-strategy="risk_aware"><span class="risk-strategy-badge">CVaR</span><h4 data-i18n="risk.riskAware">واعٍ للمخاطر</h4><p data-i18n="risk.riskAwareDesc">يعطي وزناً أكبر لتقليل الخسائر المتطرفة.</p><strong class="risk-strategy-profit" data-risk-field="expected_profit">—</strong></article></div></section>
+      <section class="card risk-metrics-card"><div class="card-header"><div><h2>📈 <span data-i18n="risk.metricsTitle">مؤشرات المخاطر</span></h2><p class="panel-sub" data-i18n="risk.metricsSub">القيم محسوبة من نتائج الاستراتيجية المختارة.</p></div></div><div class="risk-metrics-grid"><div class="risk-metric"><span data-i18n="risk.expectedProfit">الربح المتوقع</span><strong id="risk-expected-profit">—</strong></div><div class="risk-metric"><span data-i18n="risk.var95">VaR 95%</span><strong id="risk-var-95">—</strong></div><div class="risk-metric"><span data-i18n="risk.cvar95">CVaR 95%</span><strong id="risk-cvar-95">—</strong></div><div class="risk-metric"><span data-i18n="risk.stdDev">الانحراف المعياري</span><strong id="risk-standard-deviation">—</strong></div><div class="risk-metric"><span data-i18n="risk.worstCase">أسوأ ربح محتمل</span><strong id="risk-worst-case-profit">—</strong></div><div class="risk-metric"><span data-i18n="risk.bestCase">أفضل ربح محتمل</span><strong id="risk-best-case-profit">—</strong></div></div></section>
+      <section class="card risk-scenarios-card"><div class="card-header"><div><h2>🧭 <span data-i18n="risk.scenariosTitle">نتائج سيناريوهات المخاطر</span></h2><p class="panel-sub" data-i18n="risk.scenariosSub">نتيجة الخطة المختارة عبر السيناريوهات.</p></div></div><div class="table-wrapper"><table class="data-table risk-scenarios-table"><thead><tr><th data-i18n="risk.scenarioName">السيناريو</th><th data-i18n="risk.scenarioCategory">الفئة</th><th data-i18n="risk.scenarioProbability">الاحتمال</th><th data-i18n="risk.scenarioSeverity">الشدة</th><th data-i18n="risk.scenarioProfit">الربح الناتج</th></tr></thead><tbody id="risk-scenarios-tbody"></tbody></table></div><div id="risk-scenarios-empty" class="risk-inline-empty" hidden data-i18n="risk.scenariosEmpty">لا توجد نتائج سيناريوهات متاحة.</div></section>
+      <p class="risk-disclaimer" id="risk-disclaimer" hidden></p>
+    </main>
+    <footer class="app-footer"><p data-i18n="footer.text">برنامج مخطط المحاصيل والدورة الزراعية • CropMix Business Planner</p></footer>
+  </div>
+
+
   <!-- EDIT FIELD MODAL -->
   <div class="modal-backdrop" id="field-modal">
     <div class="modal">
@@ -612,24 +681,17 @@
         <div class="form-row">
           <div class="form-group">
             <label data-i18n="modal.labor">احتياج العمالة (ساعة/هكتار)</label>
-            <input type="number" id="m-crop-labor" step="1" min="0">
+            <input type="number" id="m-crop-labor" step="1" min="0" placeholder="مثال: 15">
           </div>
           <div class="form-group">
-            <label data-i18n="modal.laborRate">أجرة ساعة العمل (EGP/ساعة)</label>
-            <input type="number" id="m-crop-labor-rate" step="1" min="0">
+            <label data-i18n="modal.fert">احتياج السماد (كجم/هكتار)</label>
+            <input type="number" id="m-crop-fert" step="5" min="0" placeholder="مثال: 150">
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label data-i18n="modal.fert">احتياج السماد (كجم/هكتار)</label>
-            <input type="number" id="m-crop-fert" step="5" min="0">
-          </div>
-          <div class="form-group">
-            <label data-i18n="modal.fertRate">سعر كيلو السماد (EGP/كجم)</label>
-            <input type="number" id="m-crop-fert-rate" step="0.1" min="0">
-          </div>
-        </div>
+        <p class="form-hint" style="font-size:0.8rem; color:var(--text-muted); margin: -8px 0 10px; padding: 6px 10px; background: rgba(16,185,129,0.07); border-radius:6px; border-right: 3px solid #10b981;">
+          💡 <span data-i18n="modal.ratesHint">تكلفة العمالة والسماد تُحسب تلقائياً من الأسعار التي أدخلتها في الخطوة الأولى</span>
+        </p>
 
         <h4 class="modal-subtitle" data-i18n="modal.soilLimitsTitle">شروط ملائمة التربة (V3)</h4>
         <div class="form-row">
@@ -670,6 +732,15 @@
       <div class="modal-body" id="ms-modal-body">
         <!-- Content dynamically rendered by app.js -->
       </div>
+    </div>
+  </div>
+
+  <!-- LOADING SPINNER OVERLAY -->
+  <div class="modal-backdrop" id="loading-modal" style="z-index: 9999;">
+    <div class="modal" style="max-width: 400px; text-align: center; padding: 32px 24px;">
+      <div class="spinner-ring" style="margin: 0 auto 16px; width: 48px; height: 48px; border: 4px solid rgba(16, 185, 129, 0.2); border-top-color: #10b981; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+      <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 8px; color: var(--text-dark);" data-i18n="loading.title">جاري التخطيط والتحليل الذكي...</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;" data-i18n="loading.sub">حساب التوزيع الرياضي الأمثل وتوليد التفسير الزراعي بواسطة الذكاء الاصطناعي</p>
     </div>
   </div>
 

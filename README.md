@@ -1,3 +1,15 @@
+---
+title: Crop Mix Business Planner
+emoji: 🌾
+colorFrom: green
+colorTo: green
+sdk: gradio
+sdk_version: 4.44.0
+python_version: "3.10"
+app_file: app.py
+pinned: false
+---
+
 # Crop-Mix-Business-Planner
 
 A crop-mix optimization solver that recommends how to allocate farm land among different crops while maximizing expected profit.
@@ -35,6 +47,15 @@ Adds:
 
 The system checks whether each crop is suitable for each field and prevents unsuitable crops from being allocated.
 
+### V4 — Crop Rotation + Financial Forecasting
+
+Adds:
+- Previous-crop rotation constraints
+- Rotation suitability matrix by field
+- Financial projection summaries per field
+- Multi-season planning support
+- Arabic crop naming and UI display handling
+
 ## Optimization
 
 The model maximizes:
@@ -48,6 +69,7 @@ subject to:
 - Labor availability
 - Fertilizer availability
 - Soil suitability
+- Crop rotation restrictions
 
 The current model is a **continuous Linear Programming (LP)** model solved using **Pyomo + HiGHS**.
 
@@ -58,22 +80,27 @@ Crop-Mix-Business-Planner/
 │
 ├── src/
 │   └── crop_mix/
+│       ├── business/
+│       │   ├── financial_projection.py
+│       │   └── multi_season_planner.py
 │       ├── data/
-│       │   └── example_data.py
-│       │
-│       └── models/
-│           ├── optimizer_v1.py
-│           ├── optimizer_v2.py
-│           ├── optimizer_v3.py
-│           └── soil_suitability.py
+│       │   ├── example_data.py
+│       │   ├── crop_seasons.py
+│       │   └── rotation_loader.py
+│       ├── models/
+│       │   ├── optimizer_v1.py
+│       │   ├── optimizer_v2.py
+│       │   ├── optimizer_v3.py
+│       │   ├── optimizer_v4.py
+│       │   └── soil_suitability.py
+│       └── services/
+│           └── llm_explainer.py
 │
 ├── tests/
-│   ├── test_optimizer_v1.py
-│   ├── test_optimizer_v2.py
-│   ├── test_optimizer_v3.py
-│   └── test_soil_suitability.py
-│
 ├── run_demo.py
 ├── requirements.txt
 ├── pyproject.toml
 └── README.md
+```
+
+The solver takes field, water-budget, and yield-estimate inputs, then returns a crop-mix recommendation with clear resource-bottleneck and agronomic explanations.

@@ -5,6 +5,71 @@ from typing import Dict, List, Optional
 import pandas as pd
 
 
+FIELD_ALIASES = {
+    "Field_North": {"Field_North", "حوض الشمالي"},
+    "Field_South": {"Field_South", "حوض القبلي"},
+    "Field_East": {"Field_East", "حوض الشرقية"},
+}
+FIELD_NAME_ALIASES = {
+    alias: canonical
+    for canonical, aliases in FIELD_ALIASES.items()
+    for alias in aliases
+}
+
+
+def canonicalize_field_name(name: Optional[str]) -> Optional[str]:
+    if name is None:
+        return None
+    normalized = str(name).strip()
+    return FIELD_NAME_ALIASES.get(normalized, normalized)
+
+
+def field_aliases(name: Optional[str]) -> List[str]:
+    canonical = canonicalize_field_name(name)
+    aliases = {canonical}
+    for alias, target in FIELD_NAME_ALIASES.items():
+        if target == canonical:
+            aliases.add(alias)
+    return sorted(aliases)
+
+
+class FieldNameRegistry(dict):
+    """Canonical field registry with alias lookup support. Only canonical names remain stored."""
+
+    def __init__(self, fields: Optional[Dict[str, "FieldParameters"]] = None):
+        super().__init__()
+        if fields:
+            for key, value in fields.items():
+                self[key] = value
+
+    def _canonicalize_key(self, key: str) -> str:
+        canonical = canonicalize_field_name(key)
+        if canonical is None:
+            return key
+        return canonical
+
+    def __setitem__(self, key, value):
+        canonical = self._canonicalize_key(key)
+        dict.__setitem__(self, canonical, value)
+
+    def __getitem__(self, key):
+        canonical = self._canonicalize_key(key)
+        if dict.__contains__(self, canonical):
+            return dict.__getitem__(self, canonical)
+        raise KeyError(key)
+
+    def __contains__(self, key):
+        canonical = self._canonicalize_key(key)
+        return dict.__contains__(self, canonical)
+
+    def get(self, key, default=None):
+        canonical = self._canonicalize_key(key)
+        return dict.get(self, canonical, default)
+
+    def copy(self):
+        return dict(self)
+
+
 @dataclass
 class CropSoilRequirement:
     """Soil suitability requirements for a crop (V3/V4)."""
@@ -20,12 +85,13 @@ class FieldParameters:
     """Parameters and soil measurements for an individual farm field (V3/V4)."""
 
     name: str
-    area: float  # Field area in hectares
+    area: float  # Field area in Feddans
     ph: float  # Soil pH measurement
     ec: float  # Electrical conductivity (dS/m)
     texture: str  # Soil texture class (e.g. 'Loam', 'Clay', 'Sandy')
     organic_matter: float  # Soil organic matter percentage (%) - stored metadata
     previous_crop: Optional[str] = None  # Historical crop planted in prior season (V4)
+    name_ar: Optional[str] = None  # Arabic display name for field
 
 
 @dataclass
@@ -33,10 +99,12 @@ class CropParameters:
     """Parameters for a single crop."""
 
     name: str
-    expected_yield: float  # Metric tons per hectare
+    expected_yield: float  # Metric tons per feddan/ha
     price: float  # Price per metric ton ($/ton)
-    production_cost: float  # Base production cost per hectare ($/ha)
-    water_requirement: float  # Water requirement per hectare (m^3/ha)
+    production_cost: float  # Base production cost per feddan/ha
+    water_requirement: float  # Water requirement per feddan/ha
+    name_ar: Optional[str] = None  # Arabic display name for crop
+
 
     # V2 Extensions: Labor and Fertilizer
     labor_requirement: float = 0.0  # Labor required per hectare (hours/ha)
@@ -84,6 +152,9 @@ class FarmInputs:
     crops: Dict[str, CropParameters] = field(default_factory=dict)
     fields: Dict[str, FieldParameters] = field(default_factory=dict)  # V3/V4 fields
 
+    def __post_init__(self):
+        self.fields = FieldNameRegistry(self.fields)
+
     def to_dataframe(self) -> pd.DataFrame:
         """Convert crops data to a Pandas DataFrame."""
         records = []
@@ -124,135 +195,127 @@ class FarmInputs:
 
 
 def get_example_farm_data() -> FarmInputs:
-    """Return an example dataset with synthetic TEST/DEMO values aligned with the source-of-truth rotation matrix.
+    """Return an example preset dataset featuring popular Egyptian crops from our real datasets.
 
-    NOTE: All crop names below ('Wheat', 'Yellow Corn', 'Soybean', 'Tomato', 'Cotton') match the Excel rotation matrix.
-    All labor, fertilizer, field soil measurements, and previous crops are synthetic TEST/DEMO values.
+    All land areas are expressed in Egyptian Feddans (فدان) and crop rates are per Feddan.
+    Water requirements use real measured data from 'egypt_crop_water_requirements.xlsx' (Delta region).
     """
+    from crop_mix.data.water_loader import EgyptWaterDataLoader
+    from crop_mix.data.ecocrop_db import EcoCropDatabase
+
+    water_loader = EgyptWaterDataLoader()
+    ecocrop_db = EcoCropDatabase()
+
+    def get_soil_req(crop_name: str) -> Optional[CropSoilRequirement]:
+        entry = ecocrop_db.get_crop(crop_name)
+        return entry.to_soil_requirement() if entry else None
+
     crops = {
+
+
         "Wheat": CropParameters(
             name="Wheat",
-            expected_yield=4.5,
+            name_ar="قمح",
+            expected_yield=2.5,
             price=12500.0,
-            production_cost=20000.0,
-            water_requirement=3500.0,
-            labor_requirement=15.0,
+            production_cost=8500.0,
+            water_requirement=water_loader.get_water_requirement("Wheat", zone="Delta", season="Winter", unit="feddan"),
+            labor_requirement=6.0,
             labor_cost_per_hour=20.0,
-            fertilizer_requirement=150.0,
+            fertilizer_requirement=65.0,
             fertilizer_cost_per_kg=1.50,
-            soil_requirement=CropSoilRequirement(
-                min_ph=6.0,
-                max_ph=8.0,
-                max_ec=2.5,
-                suitable_textures=["Loam", "Clay", "Silt"],
-            ),
+            soil_requirement=get_soil_req("Wheat"),
         ),
         "Yellow Corn": CropParameters(
             name="Yellow Corn",
-            expected_yield=9.0,
+            name_ar="الذرة الصفراء",
+            expected_yield=4.0,
             price=13000.0,
-            production_cost=22000.0,
-            water_requirement=5500.0,
-            labor_requirement=25.0,
+            production_cost=9500.0,
+            water_requirement=water_loader.get_water_requirement("Yellow Corn", zone="Delta", season="Summer", unit="feddan"),
+            labor_requirement=10.0,
             labor_cost_per_hour=20.0,
-            fertilizer_requirement=200.0,
+            fertilizer_requirement=85.0,
             fertilizer_cost_per_kg=1.50,
-            soil_requirement=CropSoilRequirement(
-                min_ph=5.8,
-                max_ph=7.2,
-                max_ec=2.0,
-                suitable_textures=["Loam", "Sandy Loam", "Clay"],
-            ),
+            soil_requirement=get_soil_req("Corn"),
         ),
         "Soybean": CropParameters(
             name="Soybean",
-            expected_yield=3.0,
+            name_ar="فول صويا",
+            expected_yield=1.3,
             price=25000.0,
-            production_cost=18000.0,
-            water_requirement=4000.0,
-            labor_requirement=18.0,
+            production_cost=7500.0,
+            water_requirement=water_loader.get_water_requirement("Soybean", zone="Delta", season="Summer", unit="feddan"),
+            labor_requirement=7.0,
             labor_cost_per_hour=20.0,
-            fertilizer_requirement=50.0,
+            fertilizer_requirement=25.0,
             fertilizer_cost_per_kg=1.50,
-            soil_requirement=CropSoilRequirement(
-                min_ph=6.0,
-                max_ph=7.5,
-                max_ec=2.5,
-                suitable_textures=["Loam", "Silt", "Sandy"],
-            ),
+            soil_requirement=get_soil_req("Soybeans"),
         ),
         "Tomato": CropParameters(
             name="Tomato",
-            expected_yield=35.0,
+            name_ar="الطماطم",
+            expected_yield=15.0,
             price=8000.0,
-            production_cost=45000.0,
-            water_requirement=6500.0,
-            labor_requirement=120.0,
+            production_cost=19000.0,
+            water_requirement=water_loader.get_water_requirement("Tomato", zone="Delta", season="Winter", unit="feddan"),
+            labor_requirement=50.0,
             labor_cost_per_hour=20.0,
-            fertilizer_requirement=250.0,
+            fertilizer_requirement=100.0,
             fertilizer_cost_per_kg=1.50,
-            soil_requirement=CropSoilRequirement(
-                min_ph=6.0,
-                max_ph=7.0,
-                max_ec=1.5,
-                suitable_textures=["Loam", "Sandy"],
-            ),
+            soil_requirement=get_soil_req("Tomatoes"),
         ),
         "Cotton": CropParameters(
             name="Cotton",
-            expected_yield=2.5,
+            name_ar="القطن",
+            expected_yield=1.1,
             price=35000.0,
-            production_cost=30000.0,
-            water_requirement=5000.0,
-            labor_requirement=30.0,
+            production_cost=13000.0,
+            water_requirement=water_loader.get_water_requirement("Cotton", zone="Delta", season="Summer", unit="feddan"),
+            labor_requirement=12.0,
             labor_cost_per_hour=20.0,
-            fertilizer_requirement=180.0,
+            fertilizer_requirement=75.0,
             fertilizer_cost_per_kg=1.50,
-            soil_requirement=CropSoilRequirement(
-                min_ph=5.5,
-                max_ph=8.5,
-                max_ec=4.0,
-                suitable_textures=["Loam", "Clay", "Sandy"],
-            ),
+            soil_requirement=get_soil_req("Cotton"),
         ),
     }
 
-    # Synthetic TEST/DEMO fields with previous crop historical data for V4 testing
     fields = {
-        "Field_North": FieldParameters(
-            name="Field_North",
-            area=40.0,
-            ph=6.8,  # Ideal pH for most crops
-            ec=1.2,  # Low salinity
+
+        "حوض الشمالي": FieldParameters(
+            name="حوض الشمالي",
+            area=100.0,
+            ph=6.8,
+            ec=1.2,
             texture="Loam",
             organic_matter=2.5,
-            previous_crop="Wheat",  # Historical previous crop
+            previous_crop="Wheat",
         ),
-        "Field_South": FieldParameters(
-            name="Field_South",
-            area=35.0,
-            ph=7.8,  # Slightly alkaline
-            ec=3.5,  # Higher salinity
+        "حوض القبلي": FieldParameters(
+            name="حوض القبلي",
+            area=80.0,
+            ph=7.8,
+            ec=3.5,
             texture="Clay",
             organic_matter=1.8,
-            previous_crop="Soybean",  # Historical previous crop
+            previous_crop="Soybean",
         ),
-        "Field_East": FieldParameters(
-            name="Field_East",
-            area=25.0,
-            ph=5.5,  # Acidic
+        "حوض الشرقية": FieldParameters(
+            name="حوض الشرقية",
+            area=60.0,
+            ph=5.5,
             ec=0.8,
             texture="Sandy",
             organic_matter=1.2,
-            previous_crop=None,  # No previous crop history (fallow / new field)
+            previous_crop=None,
         ),
     }
 
     return FarmInputs(
-        field_area=100.0,
-        water_budget=400000.0,
-        labor_budget=2500.0,
-        fertilizer_budget=15000.0,
+        field_area=240.0,
+        water_budget=500000.0,
+        labor_budget=3000.0,
+        fertilizer_budget=20000.0,
         crops=crops,
-        fields=fields,
+        fields=FieldNameRegistry(fields),
     )

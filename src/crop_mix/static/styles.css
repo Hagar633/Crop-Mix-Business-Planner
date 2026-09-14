@@ -1,6 +1,12 @@
 /* CropMix Egypt - Modern & Authentic Agricultural UI Stylesheet */
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 :root {
+
   --bg-main: #f3f7f4;
   --bg-card: #ffffff;
   --bg-subtle: #ebf2ec;
@@ -53,6 +59,41 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+/* CVaR risk analysis view */
+.risk-analysis-container { display: grid; gap: 20px; }
+.risk-intro-card, .risk-strategies-card, .risk-metrics-card, .risk-scenarios-card { border-top: 3px solid var(--primary-green); }
+.risk-intro-card { display: flex; justify-content: space-between; align-items: center; gap: 18px; background: linear-gradient(135deg, #fff 0%, var(--bg-main) 100%); }
+.risk-intro-card h2 { color: var(--primary-nile); margin: 10px 0 4px; }
+.risk-state { display: flex; align-items: center; gap: 12px; color: var(--primary-nile); background: var(--bg-subtle); }
+.risk-state[hidden], .risk-inline-empty[hidden], .risk-disclaimer[hidden] { display: none; }
+.risk-state-error { color: var(--danger-text); background: var(--danger-bg); border-color: var(--danger-border); }
+.risk-strategies-card .panel-header { flex-wrap: wrap; }
+.risk-selector-label { color: var(--text-muted); font-size: .85rem; font-weight: 700; margin-inline-start: auto; }
+.risk-strategy-selector { min-width: 205px; }
+.risk-strategy-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.risk-strategy-card { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; background: var(--bg-card); transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+.risk-strategy-card.is-selected { border-color: var(--primary-green); box-shadow: 0 8px 20px rgba(45, 106, 79, .14); transform: translateY(-2px); }
+.risk-strategy-badge { display: inline-block; color: var(--gold-accent); font-size: .72rem; font-weight: 800; letter-spacing: .04em; margin-bottom: 8px; }
+.risk-strategy-card h4 { color: var(--primary-nile); margin-bottom: 4px; }
+.risk-strategy-card p { color: var(--text-muted); font-size: .88rem; min-height: 44px; }
+.risk-strategy-profit { color: var(--primary-green); display: block; font-size: 1.15rem; margin-top: 12px; }
+.risk-metrics-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.risk-metric { background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px 12px; text-align: center; }
+.risk-metric span { color: var(--text-muted); display: block; font-size: .8rem; margin-bottom: 7px; }
+.risk-metric strong { color: var(--primary-nile); display: block; font-size: 1.05rem; min-height: 1.7em; }
+.risk-scenarios-table th, .risk-scenarios-table td { text-align: right; }
+.risk-inline-empty { color: var(--text-muted); padding: 18px 4px 2px; text-align: center; }
+.risk-disclaimer { color: var(--text-dim); font-size: .8rem; padding: 0 4px 20px; text-align: center; }
+html[dir="ltr"] .risk-scenarios-table th, html[dir="ltr"] .risk-scenarios-table td { text-align: left; }
+@media (max-width: 900px) { .risk-metrics-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 680px) {
+  .risk-intro-card { align-items: stretch; flex-direction: column; }
+  .risk-intro-card .btn { width: 100%; }
+  .risk-strategy-grid, .risk-metrics-grid { grid-template-columns: 1fr; }
+  .risk-selector-label { margin-inline-start: 0; width: 100%; }
+  .risk-strategy-selector { width: 100%; }
 }
 
 /* Page Views SPA */

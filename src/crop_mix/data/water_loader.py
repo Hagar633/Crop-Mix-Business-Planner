@@ -107,13 +107,18 @@ class EgyptWaterDataLoader:
         crop_name: str,
         zone: str = "Delta",
         season: str = "Winter",
-        default_fallback: float = 4000.0,
+        default_fallback: Optional[float] = None,
+        unit: str = "feddan",
     ) -> float:
-        """Return water requirement in m^3/ha for a given crop, zone, and season.
+        """Return water requirement in m^3/feddan (or m^3/ha) for a given crop, zone, and season.
 
         Units conversion:
-        1 mm depth = 10 m^3/ha
+        1 mm depth = 10.0 m^3/ha = 4.2 m^3/feddan
         """
+        multiplier = 4.2 if unit.lower() in ("feddan", "feddans", "فدان") else 10.0
+        if default_fallback is None:
+            default_fallback = 1680.0 if unit.lower() in ("feddan", "feddans", "فدان") else 4000.0
+
         norm_crop = self.normalize_crop_name(crop_name)
         clean_crop = crop_name.strip()
         clean_zone = zone.strip() if zone else "Delta"
@@ -130,7 +135,7 @@ class EgyptWaterDataLoader:
             if not matches.empty:
                 val_mm = matches.iloc[0]["Estimated seasonal water requirement (mm)"]
                 if pd.notna(val_mm) and val_mm > 0:
-                    return float(val_mm) * 10.0
+                    return float(val_mm) * multiplier
 
             # 2. Match on crop and zone (any season)
             mask_zone = (
@@ -141,7 +146,7 @@ class EgyptWaterDataLoader:
             if not matches_zone.empty:
                 val_mm = matches_zone.iloc[0]["Estimated seasonal water requirement (mm)"]
                 if pd.notna(val_mm) and val_mm > 0:
-                    return float(val_mm) * 10.0
+                    return float(val_mm) * multiplier
 
             # 3. Match on crop (any zone/season) in Ready Lookup
             mask_crop = self._ready_lookup["Crop_Norm"].str.lower() == norm_crop.lower()
@@ -149,7 +154,7 @@ class EgyptWaterDataLoader:
             if not matches_crop.empty:
                 val_mm = matches_crop.iloc[0]["Estimated seasonal water requirement (mm)"]
                 if pd.notna(val_mm) and val_mm > 0:
-                    return float(val_mm) * 10.0
+                    return float(val_mm) * multiplier
 
         # 4. Fallback to Seasonal_ETcrop_Range sheet (FAO24 ET range midpoint)
         if not self._et_range.empty:
@@ -162,9 +167,10 @@ class EgyptWaterDataLoader:
                 max_mm = matches_et.iloc[0]["Seasonal ETcrop Max (mm)"]
                 if pd.notna(min_mm) and pd.notna(max_mm):
                     avg_mm = (float(min_mm) + float(max_mm)) / 2.0
-                    return avg_mm * 10.0
+                    return avg_mm * multiplier
 
         return default_fallback
+
 
     def get_all_crop_water_info(self, zone: str = "Delta", season: str = "Winter") -> Dict[str, float]:
         """Return water requirement dictionary for all known crops in specified zone and season."""

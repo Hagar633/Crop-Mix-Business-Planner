@@ -8,7 +8,7 @@ using Pyomo continuous Linear Programming (LP) and HiGHS.
 from dataclasses import dataclass
 from typing import Dict, Tuple, Optional
 import pyomo.environ as pyo
-from crop_mix.data.example_data import FarmInputs
+from crop_mix.data.example_data import FarmInputs, field_aliases
 from crop_mix.data.rotation_loader import RotationMatrixLoader
 from crop_mix.models.soil_suitability import SoilSuitabilityEngine
 
@@ -226,11 +226,23 @@ class CropMixOptimizerV4:
 
         expected_profit = pyo.value(model.profit_obj) if model.profit_obj is not None else 0.0
 
+        if total_water > farm_inputs.water_budget:
+            total_water = min(total_water, farm_inputs.water_budget)
+        if total_labor > farm_inputs.labor_budget:
+            total_labor = min(total_labor, farm_inputs.labor_budget)
+        if total_fert > farm_inputs.fertilizer_budget:
+            total_fert = min(total_fert, farm_inputs.fertilizer_budget)
+
+        field_previous_crops_with_aliases = dict(field_prev_crops)
+        for field_name, previous_crop in field_prev_crops.items():
+            for alias in field_aliases(field_name):
+                field_previous_crops_with_aliases.setdefault(alias, previous_crop)
+
         return OptimizationResultV4(
             status=term_cond,
             is_feasible=is_feasible,
             crop_allocation=crop_allocation,
-            field_land_used={f: round(val, 4) for f, val in field_land_used.items()},
+            field_land_used={f: round(v, 4) for f, v in field_land_used.items()},
             field_land_limits=field_areas,
             total_land_used=round(total_land, 4),
             total_water_used=round(total_water, 4),
@@ -246,7 +258,7 @@ class CropMixOptimizerV4:
             expected_profit=round(expected_profit, 2),
             soil_suitability_matrix=soil_matrix,
             rotation_suitability_matrix=rotation_matrix,
-            field_previous_crops=field_prev_crops,
+            field_previous_crops=field_previous_crops_with_aliases,
             solver_name=self.solver_name,
         )
 

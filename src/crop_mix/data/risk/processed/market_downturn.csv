@@ -1,0 +1,6 @@
+crop,baseline_price_usd_per_tonne,downturn_price_usd_per_tonne,price_multiplier,downturn_quantile,num_historical_observations,num_downturn_observations,historical_year_start,historical_year_end,downturn_years
+Cotton,1040.75,255.0,0.24501561,0.1,10,2,2011,2023,2017;2018
+Soybean,585.25,308.8,0.52763776,0.1,10,2,2011,2023,2017;2018
+Tomato,214.7,98.65,0.45947834,0.1,13,2,2011,2023,2017;2018
+Wheat,358.8,212.1,0.59113712,0.1,13,2,2011,2023,2017;2018
+Yellow Corn,325.2,162.9,0.50092251,0.1,13,2,2011,2023,2017;2018

@@ -6,6 +6,8 @@ const state = {
   water_budget: 400000,
   labor_budget: 2500,
   fertilizer_budget: 15000,
+  global_labor_rate: 0,        // EGP per labor hour — set in Step 1
+  global_fertilizer_rate: 0,   // EGP per kg fertilizer — set in Step 1
   zone: "Delta",
   season: "Winter",
   fields: [],
@@ -13,7 +15,10 @@ const state = {
   ecocropSpecies: [],
   rotationCrops: [],
   lastResult: null,
+  riskResult: null,
+  selectedRiskStrategy: "balanced",
 };
+
 
 // Bilingual Translation Dictionary (Clean, Natural Arabic & English)
 const i18nData = {
@@ -42,8 +47,10 @@ const i18nData = {
     "step1.title": "الميزانية العامة للمزرعة",
     "step1.sub": "المياه المتاحة والعمالة والأسمدة",
     "step1.waterLabel": "ميزانية المياه",
-    "step1.laborLabel": "ساعات العمل",
-    "step1.fertLabel": "كمية السماد",
+    "step1.laborLabel": "ساعات العمل المتاحة",
+    "step1.fertLabel": "كمية السماد المتاحة",
+    "step1.laborRateLabel": "أجرة ساعة العمل للمزرعة",
+    "step1.fertRateLabel": "سعر كيلو السماد للمزرعة",
     "step1.zoneLabel": "المنطقة في مصر",
     "step1.seasonLabel": "الموسم الزراعي",
     "zone.delta": "الدلتا (Delta)",
@@ -62,7 +69,7 @@ const i18nData = {
     "step3.ecocropDefault": "🌱 استيراد من موسوعة فاو إيكوكروب...",
     "step3.addCrop": "+ إضافة محصول",
     "th.fieldName": "اسم الأرض",
-    "th.fieldArea": "المساحة (هكتار/فدان)",
+    "th.fieldArea": "المساحة (فدان)",
     "th.ph": "الحموضة pH",
     "th.ec": "الملوحة EC",
     "th.texture": "نوع التربة",
@@ -70,13 +77,14 @@ const i18nData = {
     "th.prevCrop": "المحصول السابق",
     "th.action": "إجراء",
     "th.crop": "المحصول",
-    "th.yield": "الإنتاجية (طن/هكتار)",
+    "th.yield": "الإنتاجية (طن/فدان)",
     "th.price": "سعر الطن (EGP)",
-    "th.cost": "التكلفة (EGP)",
-    "th.water": "المياه (م³/هكتار)",
-    "th.labor": "العمالة (ساعة)",
-    "th.fert": "السماد (كجم)",
-    "th.netProfit": "الربح المتوقع (EGP)",
+    "th.cost": "التكلفة (ج.م/فدان)",
+    "th.water": "المياه (م³/فدان)",
+    "th.labor": "العمالة (ساعة/فدان)",
+    "th.fert": "السماد (كجم/فدان)",
+    "th.netProfit": "الربح المتوقع (EGP/فدان)",
+
     "res.headerTagline": "التوزيع الموصى به للمواسم القادمة",
     "res.editInputsBtn": "تعديل البيانات ✏️",
     "res.printBtn": "طباعة الخطة 🖨️",
@@ -99,7 +107,7 @@ const i18nData = {
     "res.bindingTitle": "محلل القيود المحددة للربح",
     "res.detailsAccordion": "عرض التفاصيل الفنية الهندسية ومصفوفات التتابع",
     "modal.fieldName": "اسم قطعة الأرض",
-    "modal.fieldArea": "المساحة (هكتار / فدان)",
+    "modal.fieldArea": "المساحة (فدان)",
     "modal.ph": "حموضة التربة (pH)",
     "modal.ec": "ملوحة التربة (EC dS/m)",
     "modal.texture": "نوع التربة",
@@ -107,21 +115,59 @@ const i18nData = {
     "modal.prevCrop": "المحصول السابق (سجل الدورة الزراعية V4)",
     "modal.ecocropAuto": "🌱 استيراد متطلبات التربة والمياه من موسوعة فاو إيكوكروب",
     "modal.cropName": "اسم المحصول",
-    "modal.yield": "الإنتاجية المتوقعة (طن/هكتار)",
+    "modal.yield": "الإنتاجية المتوقعة (طن/فدان)",
     "modal.price": "سعر بيع الطن (EGP/ton)",
-    "modal.cost": "تكلفة الزراعة (EGP/ha)",
-    "modal.water": "احتياج المياه (م³/هكتار)",
-    "modal.labor": "احتياج العمالة (ساعة/هكتار)",
+    "modal.cost": "تكلفة الزراعة (ج.م/فدان)",
+    "modal.water": "احتياج المياه (م³/فدان)",
+    "modal.labor": "احتياج العمالة (ساعة/فدان)",
     "modal.laborRate": "أجرة ساعة العمل (EGP/ساعة)",
-    "modal.fert": "احتياج السماد (كجم/هكتار)",
+    "modal.fert": "احتياج السماد (كجم/فدان)",
+
     "modal.fertRate": "سعر كيلو السماد (EGP/كجم)",
     "modal.soilLimitsTitle": "شروط ملائمة التربة (V3)",
     "modal.minPh": "أقل درجة حموضة تحمل",
     "modal.maxPh": "أعلى درجة حموضة تحمل",
     "modal.maxEc": "أقصى ملوحة متحملة (EC dS/m)",
     "modal.textures": "أنواع التربة المناسبة (مفصولة بفواصل)",
+    "modal.ratesHint": "تكلفة العمالة والسماد تُحسب تلقائياً من الأسعار التي أدخلتها في الخطوة الأولى",
     "btn.cancel": "إلغاء",
     "btn.save": "حفظ البيانات",
+    "risk.openBtn": "تحليل المخاطر",
+    "risk.headerBadge": "تحليل المخاطر",
+    "risk.headerTagline": "مقارنة الخطط حسب الربحية والتعرض للمخاطر",
+    "risk.backBtn": "العودة للخطة",
+    "risk.statusReady": "جاهز لتحليل المخاطر",
+    "risk.title": "تحليل المخاطر باستخدام CVaR",
+    "risk.subtitle": "قارن بين ثلاث استراتيجيات زراعية عبر سيناريوهات السوق والإنتاج المحتملة.",
+    "risk.runBtn": "تشغيل تحليل المخاطر",
+    "risk.loading": "جاري تحليل السيناريوهات...",
+    "risk.empty": "لا توجد نتائج مخاطر بعد. شغّل التحليل لعرض المقارنة.",
+    "risk.error": "تعذر تحميل تحليل المخاطر.",
+    "risk.strategiesTitle": "استراتيجيات التخطيط",
+    "risk.strategiesSub": "اختر استراتيجية لعرض مؤشرات المخاطر والنتائج الخاصة بها.",
+    "risk.selectorLabel": "الاستراتيجية الحالية",
+    "risk.maxProfit": "أقصى ربح",
+    "risk.maxProfitDesc": "يركز على تعظيم الربح المتوقع.",
+    "risk.balanced": "متوازن",
+    "risk.balancedDesc": "يوازن بين العائد وحماية الجانب الهبوطي.",
+    "risk.riskAware": "واعٍ للمخاطر",
+    "risk.riskAwareDesc": "يعطي وزناً أكبر لتقليل الخسائر المتطرفة.",
+    "risk.metricsTitle": "مؤشرات المخاطر",
+    "risk.metricsSub": "القيم محسوبة من نتائج الاستراتيجية المختارة.",
+    "risk.expectedProfit": "الربح المتوقع",
+    "risk.var95": "VaR 95%",
+    "risk.cvar95": "CVaR 95%",
+    "risk.stdDev": "الانحراف المعياري",
+    "risk.worstCase": "أسوأ ربح محتمل",
+    "risk.bestCase": "أفضل ربح محتمل",
+    "risk.scenariosTitle": "نتائج سيناريوهات المخاطر",
+    "risk.scenariosSub": "نتيجة الخطة المختارة عبر السيناريوهات.",
+    "risk.scenarioName": "السيناريو",
+    "risk.scenarioCategory": "الفئة",
+    "risk.scenarioProbability": "الاحتمال",
+    "risk.scenarioSeverity": "الشدة",
+    "risk.scenarioProfit": "الربح الناتج",
+    "risk.scenariosEmpty": "لا توجد نتائج سيناريوهات متاحة.",
   },
   en: {
     "landing.brandSub": "Smart Agricultural Crop & Rotation Planner",
@@ -148,8 +194,10 @@ const i18nData = {
     "step1.title": "Global Farm Budgets",
     "step1.sub": "Set water, labor, and fertilizer availability",
     "step1.waterLabel": "Water Budget",
-    "step1.laborLabel": "Labor Hours",
+    "step1.laborLabel": "Labor Hours Available",
     "step1.fertLabel": "Fertilizer Budget",
+    "step1.laborRateLabel": "Farm Wage Rate",
+    "step1.fertRateLabel": "Fertilizer Unit Price",
     "step1.zoneLabel": "Region in Egypt",
     "step1.seasonLabel": "Agricultural Season",
     "zone.delta": "Delta",
@@ -226,26 +274,105 @@ const i18nData = {
     "modal.maxPh": "Max Tolerable pH",
     "modal.maxEc": "Max Salinity EC",
     "modal.textures": "Suitable Textures (comma separated)",
+    "modal.ratesHint": "Labor & fertilizer costs are auto-calculated from the rates you entered in Step 1",
     "btn.cancel": "Cancel",
     "btn.save": "Save Data",
+    "risk.openBtn": "Risk Analysis",
+    "risk.headerBadge": "Risk Analysis",
+    "risk.headerTagline": "Compare plans by profitability and downside exposure",
+    "risk.backBtn": "Back to plan",
+    "risk.statusReady": "Ready for risk analysis",
+    "risk.title": "CVaR Risk Analysis",
+    "risk.subtitle": "Compare three farm strategies across possible market and production scenarios.",
+    "risk.runBtn": "Run Risk Analysis",
+    "risk.loading": "Analyzing scenarios...",
+    "risk.empty": "No risk results yet. Run the analysis to view the comparison.",
+    "risk.error": "Risk analysis could not be loaded.",
+    "risk.strategiesTitle": "Planning Strategies",
+    "risk.strategiesSub": "Choose a strategy to view its risk metrics and results.",
+    "risk.selectorLabel": "Current strategy",
+    "risk.maxProfit": "Max Profit",
+    "risk.maxProfitDesc": "Focuses on maximizing expected profit.",
+    "risk.balanced": "Balanced",
+    "risk.balancedDesc": "Balances returns with downside protection.",
+    "risk.riskAware": "Risk Aware",
+    "risk.riskAwareDesc": "Places more weight on limiting extreme losses.",
+    "risk.metricsTitle": "Risk Metrics",
+    "risk.metricsSub": "Values are calculated for the selected strategy.",
+    "risk.expectedProfit": "Expected profit",
+    "risk.var95": "VaR 95%",
+    "risk.cvar95": "CVaR 95%",
+    "risk.stdDev": "Standard deviation",
+    "risk.worstCase": "Worst possible profit",
+    "risk.bestCase": "Best possible profit",
+    "risk.scenariosTitle": "Risk Scenario Results",
+    "risk.scenariosSub": "Selected plan results across the modeled scenarios.",
+    "risk.scenarioName": "Scenario",
+    "risk.scenarioCategory": "Category",
+    "risk.scenarioProbability": "Probability",
+    "risk.scenarioSeverity": "Severity",
+    "risk.scenarioProfit": "Resulting profit",
+    "risk.scenariosEmpty": "No scenario results are available.",
   }
 };
 
-// Crop translation mapping for common crop names
+// Official 53 Egyptian Arabic Crop Names from Source of Truth Matrix
 const cropNamesAr = {
-  "Wheat": "قمح (Wheat)",
-  "Yellow Corn": "ذرة صفراء (Yellow Corn)",
-  "Soybean": "فول صويا (Soybean)",
-  "Tomato": "طماطم (Tomato)",
-  "Cotton": "قطن (Cotton)",
-  "Barley": "شعير (Barley)",
-  "Rice": "أرز (Rice)",
-  "Potato": "بطاطس (Potato)",
-  "Onion": "بصل (Onion)",
-  "Garlic": "ثوم (Garlic)",
-  "Alfalfa": "برسيم (Alfalfa)",
-  "Sugar Cane": "قصب السكر (Sugar Cane)",
+  "Barley": "شعير",
+  "Wheat": "قمح",
+  "Rice": "الأرز",
+  "Garlic": "الثوم",
+  "Egyptian Clover / Berseem": "البرسيم",
+  "Sweet Corn": "الذرة السكرية",
+  "Fodder Beet": "بنجر العلف",
+  "Lupin": "الترمس",
+  "Fenugreek": "الحلبة الجافة",
+  "Chickpea": "الحمص",
+  "Lentil": "العدس",
+  "Flax": "الكتان",
+  "Cotton": "القطن",
+  "Sesame": "السمسم",
+  "Peanut / Groundnut": "فول سوداني",
+  "Oilseed Sunflower": "زيتي عباد شمس",
+  "Soybean": "فول صويا",
+  "Sunflower": "عباد شمس عادي",
+  "Sugar Beet": "بنجر السكر",
+  "Sugarcane": "قصب السكر",
+  "Eggplant / Aubergine": "الباذنجان",
+  "Pea": "البسلة",
+  "Potato": "البطاطس",
+  "Tomato": "الطماطم",
+  "Common Bean": "الفاصوليا",
+  "Strawberry": "الفراولة",
+  "Pepper": "الفلفل",
+  "Caraway": "الكراوية",
+  "Roselle / Hibiscus": "الكركديه",
+  "Anise": "اليانسون",
+  "Cumin": "الكمون",
+  "Mint": "النعناع",
+  "Chamomile": "البابونج",
+  "Marjoram": "البردقوش",
+  "Orange": "البرتقال",
+  "Pomegranate": "الرمان",
+  "Olive": "الزيتون",
+  "Grape": "العنب",
+  "Mango": "المانجو",
+  "Banana": "الموز",
+  "Mandarin": "اليوسفي",
+  "White Corn": "الذرة البيضاء",
+  "Yellow Corn": "الذرة الصفراء",
+  "Sorghum": "الذرة الرفيعة",
+  "Black-Seed Onion": "بصل حبة سوداء",
+  "Fully Mature (Dry) Onion": "بصل كامل النضج",
+  "Green Onion (Single Harvest)": "بصل مستهلك اخضر مفرد",
+  "Baladi Fava Bean (Single-Cut)": "الفول البلدي مفرد",
+  "Baladi Fava Bean (Complementary)": "الفول البلدي مكمل",
+  "Zaghloul Date Palm": "النخيل بلح زغلول",
+  "Tamr Date Palm": "النخيل تمر",
+  "Gindeila Date Palm": "النخيل جنديلة",
+  "Siwi Date Palm": "النخيل سيوي",
 };
+
 
 // Initialize Application
 document.addEventListener("DOMContentLoaded", () => {
@@ -256,6 +383,7 @@ document.addEventListener("DOMContentLoaded", () => {
   fetchRotationCrops();
 });
 
+
 // SPA Navigation
 function navigateTo(pageId) {
   document.querySelectorAll(".page-view").forEach((view) => {
@@ -265,6 +393,106 @@ function navigateTo(pageId) {
   if (target) {
     target.classList.add("active");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+}
+
+function openRiskAnalysis() {
+  navigateTo("risk-analysis");
+  if (state.riskResult) renderRiskAnalysis(state.riskResult);
+  else setRiskState("empty");
+}
+
+function setRiskState(stateName, message) {
+  ["loading", "empty", "error"].forEach((name) => {
+    const element = document.getElementById(`risk-${name}-state`);
+    if (element) element.hidden = name !== stateName;
+  });
+  const errorMessage = document.getElementById("risk-error-message");
+  if (message && errorMessage) errorMessage.textContent = message;
+}
+
+function buildRiskPayload() {
+  return {
+    zone: state.zone,
+    season: state.season,
+    water_budget: Number(state.water_budget) || 0,
+    labor_budget: Number(state.labor_budget) || 0,
+    fertilizer_budget: Number(state.fertilizer_budget) || 0,
+    crops: state.crops,
+    fields: state.fields,
+  };
+}
+
+async function runRiskAnalysis() {
+  setRiskState("loading");
+  try {
+    const response = await fetch("/api/risk/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildRiskPayload()),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Risk analysis failed");
+    state.riskResult = result;
+    renderRiskAnalysis(result);
+    setRiskState("");
+    const status = document.getElementById("risk-status-pill");
+    if (status) {
+      status.textContent = state.lang === "ar" ? "تم تحليل المخاطر" : "Risk analysis complete";
+      status.className = "status-pill success";
+    }
+  } catch (error) {
+    console.error("Risk analysis error:", error);
+    setRiskState("error", error.message);
+  }
+}
+
+function formatRiskValue(value) {
+  if (value === null || value === undefined || value === "") return "—";
+  const number = Number(value);
+  return Number.isFinite(number)
+    ? `${number.toLocaleString("en-US", { maximumFractionDigits: 0 })} ${getCurrencySymbol()}`
+    : escapeHtml(String(value));
+}
+
+function renderRiskAnalysis(result) {
+  const plans = result && result.plans ? result.plans : {};
+  const selectedKey = plans[state.selectedRiskStrategy] ? state.selectedRiskStrategy : Object.keys(plans)[0];
+  if (!selectedKey) return;
+  state.selectedRiskStrategy = selectedKey;
+  const selector = document.getElementById("risk-strategy-selector");
+  if (selector) selector.value = selectedKey;
+  document.querySelectorAll("[data-risk-strategy]").forEach((card) => {
+    card.classList.toggle("is-selected", card.dataset.riskStrategy === selectedKey);
+    const plan = plans[card.dataset.riskStrategy];
+    const profit = card.querySelector("[data-risk-field='expected_profit']");
+    if (profit) profit.textContent = plan ? formatRiskValue(plan.risk_metrics && plan.risk_metrics.expected_profit) : "—";
+  });
+  const metrics = (plans[selectedKey] && plans[selectedKey].risk_metrics) || {};
+  Object.entries({
+    "risk-expected-profit": metrics.expected_profit,
+    "risk-var-95": metrics.var_95,
+    "risk-cvar-95": metrics.cvar_95,
+    "risk-standard-deviation": metrics.std_dev,
+    "risk-worst-case-profit": metrics.min_scenario_profit,
+    "risk-best-case-profit": metrics.max_scenario_profit,
+  }).forEach(([id, value]) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = formatRiskValue(value);
+  });
+  const scenarios = Array.isArray(plans[selectedKey].scenario_profits) ? plans[selectedKey].scenario_profits : [];
+  const tbody = document.getElementById("risk-scenarios-tbody");
+  if (tbody) tbody.innerHTML = scenarios.map((scenario) => {
+    const name = state.lang === "ar" ? (scenario.scenario_name_arabic || scenario.scenario_name) : scenario.scenario_name;
+    const probability = scenario.probability === undefined ? "—" : `${(Number(scenario.probability) * 100).toFixed(1)}%`;
+    return `<tr><td><strong>${escapeHtml(name || "—")}</strong></td><td>${escapeHtml(scenario.category || "—")}</td><td>${probability}</td><td>${escapeHtml(String(scenario.severity || "—"))}</td><td>${formatRiskValue(scenario.net_profit)}</td></tr>`;
+  }).join("");
+  const empty = document.getElementById("risk-scenarios-empty");
+  if (empty) empty.hidden = scenarios.length > 0;
+  const disclaimer = document.getElementById("risk-disclaimer");
+  if (disclaimer) {
+    disclaimer.hidden = !result.disclaimer;
+    disclaimer.textContent = result.disclaimer || "";
   }
 }
 
@@ -303,6 +531,9 @@ function applyLanguage(lang) {
   renderCropsTable();
   if (state.lastResult) {
     renderResults(state.lastResult);
+  }
+  if (state.riskResult) {
+    renderRiskAnalysis(state.riskResult);
   }
 }
 
@@ -358,8 +589,8 @@ function getCropDisplayName(c) {
   let name = "";
   let nameAr = "";
   if (typeof c === "object" && c !== null) {
-    name = c.name || "";
-    nameAr = c.name_arabic || c.arabic_name || "";
+    name = c.name || c.crop_name || c.crop || "";
+    nameAr = c.name_arabic || c.arabic_name || c.nameAr || "";
   } else {
     name = String(c || "");
   }
@@ -367,18 +598,29 @@ function getCropDisplayName(c) {
   const canonical = getCanonicalCropName(name);
 
   if (state.lang === "ar") {
-    if (cropNamesAr[canonical]) return cropNamesAr[canonical];
-    if (cropNamesAr[name]) return cropNamesAr[name];
+    if (state.arabicMap && state.arabicMap[canonical]) return state.arabicMap[canonical];
+    if (state.arabicMap && state.arabicMap[name]) return state.arabicMap[name];
+    if (cropNamesAr && cropNamesAr[canonical]) return cropNamesAr[canonical];
+    if (cropNamesAr && cropNamesAr[name]) return cropNamesAr[name];
     if (nameAr) return `${nameAr} (${canonical || name})`;
   }
   return canonical || name;
 }
+
 
 function initEventListeners() {
   document.getElementById("btn-load-preset").addEventListener("click", loadPresetData);
   document.getElementById("btn-run-optimize").addEventListener("click", runOptimizationAndShowPlan);
   document.getElementById("btn-add-field").addEventListener("click", () => openFieldModal());
   document.getElementById("btn-add-crop").addEventListener("click", () => openCropModal());
+
+  const riskStrategySelector = document.getElementById("risk-strategy-selector");
+  if (riskStrategySelector) {
+    riskStrategySelector.addEventListener("change", (event) => {
+      state.selectedRiskStrategy = event.target.value;
+      if (state.riskResult) renderRiskAnalysis(state.riskResult);
+    });
+  }
   
   const selectEcoCropHeader = document.getElementById("select-ecocrop-import");
   if (selectEcoCropHeader) {
@@ -415,7 +657,24 @@ function initEventListeners() {
   document.getElementById("budget-fertilizer").addEventListener("change", (e) => {
     state.fertilizer_budget = parseFloat(e.target.value) || 0;
   });
+
+  // Global farm cost rates — re-render profit column on change
+  const laborRateElem = document.getElementById("global-labor-rate");
+  if (laborRateElem) {
+    laborRateElem.addEventListener("input", (e) => {
+      state.global_labor_rate = parseFloat(e.target.value) || 0;
+      renderCropsTable();
+    });
+  }
+  const fertRateElem = document.getElementById("global-fertilizer-rate");
+  if (fertRateElem) {
+    fertRateElem.addEventListener("input", (e) => {
+      state.global_fertilizer_rate = parseFloat(e.target.value) || 0;
+      renderCropsTable();
+    });
+  }
 }
+
 
 async function updateCropsWaterRequirements() {
   for (let c of state.crops) {
@@ -448,9 +707,15 @@ async function loadPresetData() {
     state.fields = data.fields;
     state.crops = data.crops;
 
+    // Demo farm uses 20 EGP/hr labor and 1.5 EGP/kg fertilizer
+    state.global_labor_rate = 20;
+    state.global_fertilizer_rate = 1.5;
+
     document.getElementById("budget-water").value = state.water_budget;
     document.getElementById("budget-labor").value = state.labor_budget;
     document.getElementById("budget-fertilizer").value = state.fertilizer_budget;
+    document.getElementById("global-labor-rate").value = state.global_labor_rate;
+    document.getElementById("global-fertilizer-rate").value = state.global_fertilizer_rate;
 
     renderFieldsTable();
     renderCropsTable();
@@ -459,6 +724,7 @@ async function loadPresetData() {
     console.error(err);
   }
 }
+
 
 async function fetchEcoCropSpecies() {
   try {
@@ -478,10 +744,14 @@ async function fetchRotationCrops() {
     if (!res.ok) return;
     const data = await res.json();
     state.rotationCrops = data.crops || [];
+    if (data.arabic_map) {
+      state.arabicMap = data.arabic_map;
+    }
   } catch (err) {
     console.error("Failed to load rotation matrix crops:", err);
   }
 }
+
 
 function populatePreviousCropDropdown(selectedVal = "") {
   const select = document.getElementById("m-field-prev-crop");
@@ -529,7 +799,8 @@ async function importFromEcoCropHeader(cropName) {
     if (!res.ok) throw new Error(`EcoCrop species '${cropName}' not found.`);
     const item = await res.json();
 
-    let waterReq = item.water_requirement || 4000.0;
+    // Fetch real water from Egypt database
+    let waterReq = item.water_requirement || "";
     try {
       const wRes = await fetch(`/api/water/lookup/${encodeURIComponent(item.name)}?zone=${encodeURIComponent(state.zone)}&season=${encodeURIComponent(state.season)}`);
       if (wRes.ok) {
@@ -542,36 +813,29 @@ async function importFromEcoCropHeader(cropName) {
       console.error("Water lookup error:", e);
     }
 
+    // Open crop modal pre-filled with real data — user completes price & cost
     const existingIdx = state.crops.findIndex(c => c.name.toLowerCase() === item.name.toLowerCase());
-    const cropData = {
-      name: item.name,
-      expected_yield: item.default_expected_yield || 5.0,
-      price: item.default_price || 12000.0,
-      production_cost: item.default_production_cost || 20000.0,
-      water_requirement: waterReq,
-      labor_requirement: 20.0,
-      labor_cost_per_hour: 20.0,
-      fertilizer_requirement: 100.0,
-      fertilizer_cost_per_kg: 1.5,
-      soil_requirement: {
-        min_ph: item.min_ph,
-        max_ph: item.max_ph,
-        max_ec: item.max_ec,
-        suitable_textures: item.suitable_textures,
-      },
-    };
+    openCropModal(existingIdx >= 0 ? existingIdx : null);
 
-    if (existingIdx >= 0) {
-      state.crops[existingIdx] = cropData;
-    } else {
-      state.crops.push(cropData);
-    }
+    // After modal opens, fill in the real data
+    setTimeout(() => {
+      document.getElementById("m-crop-name").value = item.name;
+      document.getElementById("m-crop-yield").value = 5.0;   // placeholder
+      document.getElementById("m-crop-price").value = "";     // user must enter
+      document.getElementById("m-crop-cost").value = "";      // user must enter
+      document.getElementById("m-crop-water").value = waterReq;
+      document.getElementById("m-crop-min-ph").value = item.min_ph || 6.0;
+      document.getElementById("m-crop-max-ph").value = item.max_ph || 8.0;
+      document.getElementById("m-crop-max-ec").value = item.max_ec || 2.5;
+      document.getElementById("m-crop-textures").value = item.suitable_textures ? item.suitable_textures.join(", ") : "Loam, Clay, Silt";
+    }, 50);
 
-    renderCropsTable();
   } catch (err) {
     alert("Error importing EcoCrop species: " + err.message);
   }
 }
+
+
 
 async function autoFillFromEcoCropModal(cropName) {
   if (!cropName) return;
@@ -580,7 +844,8 @@ async function autoFillFromEcoCropModal(cropName) {
     if (!res.ok) return;
     const item = await res.json();
 
-    let waterReq = item.water_requirement || 4000.0;
+    // Fetch real water requirement from Egypt water database
+    let waterReq = item.water_requirement || "";
     try {
       const wRes = await fetch(`/api/water/lookup/${encodeURIComponent(item.name)}?zone=${encodeURIComponent(state.zone)}&season=${encodeURIComponent(state.season)}`);
       if (wRes.ok) {
@@ -592,10 +857,11 @@ async function autoFillFromEcoCropModal(cropName) {
     } catch (e) {}
 
     document.getElementById("m-crop-name").value = item.name;
-    document.getElementById("m-crop-yield").value = item.default_expected_yield || 5.0;
-    document.getElementById("m-crop-price").value = item.default_price || 12000.0;
-    document.getElementById("m-crop-cost").value = item.default_production_cost || 20000.0;
-    document.getElementById("m-crop-water").value = waterReq;
+    document.getElementById("m-crop-yield").value = 5.0;      // placeholder — user can modify
+    document.getElementById("m-crop-price").value = "";        // user must enter real price
+    document.getElementById("m-crop-cost").value = "";         // user must enter real cost
+    document.getElementById("m-crop-water").value = waterReq; // from real Egypt water data
+    // Soil suitability from real EcoCrop data
     document.getElementById("m-crop-min-ph").value = item.min_ph;
     document.getElementById("m-crop-max-ph").value = item.max_ph;
     document.getElementById("m-crop-max-ec").value = item.max_ec;
@@ -605,22 +871,55 @@ async function autoFillFromEcoCropModal(cropName) {
   }
 }
 
+
 async function runOptimizationAndShowPlan() {
   const version = document.getElementById("optimizer-version").value;
   const statusPill = document.getElementById("status-pill");
-  
-  statusPill.textContent = state.lang === "ar" ? "جاري التخطيط..." : "Calculating Plan...";
+
+  // Validate that all crops have a price
+  const missingPrice = state.crops.filter(c => !c.price || c.price <= 0);
+  if (missingPrice.length > 0) {
+    const names = missingPrice.map(c => c.name).join("، ");
+    alert((state.lang === "ar"
+      ? `يرجى إدخال سعر البيع للمحاصيل التالية قبل المتابعة:\n${names}`
+      : `Please enter a selling price for: ${names}`));
+    return;
+  }
+
+  // Warn if global rates are 0 but crops have labor/fertilizer requirements
+  const hasLaborReq = state.crops.some(c => (c.labor_requirement || 0) > 0);
+  const hasFertReq = state.crops.some(c => (c.fertilizer_requirement || 0) > 0);
+  if ((hasLaborReq && state.global_labor_rate === 0) || (hasFertReq && state.global_fertilizer_rate === 0)) {
+    const msg = state.lang === "ar"
+      ? "تنبيه: أجرة العمالة أو سعر السماد = صفر. سيتم احتساب الربح بدون خصم تكاليف العمالة/السماد. هل تريد المتابعة؟"
+      : "Warning: Farm wage rate or fertilizer price is 0. Labor/fertilizer costs will not be deducted. Continue anyway?";
+    if (!confirm(msg)) return;
+  }
+
+  statusPill.textContent = state.lang === "ar" ? "جاري التخطيط والتحليل الذكي..." : "Calculating Plan & AI Explanation...";
   statusPill.className = "status-pill";
+
+  // Show Loading Spinner Overlay
+  const loadingModal = document.getElementById("loading-modal");
+  if (loadingModal) loadingModal.classList.add("active");
+
+  // Inject global farm rates into each crop before sending
+  const cropsWithRates = state.crops.map(c => ({
+    ...c,
+    labor_cost_per_hour: state.global_labor_rate,
+    fertilizer_cost_per_kg: state.global_fertilizer_rate,
+  }));
 
   const payload = {
     version: version,
     zone: state.zone,
     season: state.season,
+    lang: state.lang,
     water_budget: parseFloat(document.getElementById("budget-water").value) || 0,
     labor_budget: parseFloat(document.getElementById("budget-labor").value) || 0,
     fertilizer_budget: parseFloat(document.getElementById("budget-fertilizer").value) || 0,
     fields: state.fields,
-    crops: state.crops,
+    crops: cropsWithRates,
   };
 
   try {
@@ -631,9 +930,10 @@ async function runOptimizationAndShowPlan() {
     });
 
     if (!res.ok) {
-      const errJson = await res.json();
+      const errJson = await res.json().catch(() => ({ detail: `HTTP ${res.status} ${res.statusText}` }));
       throw new Error(errJson.detail || "Optimization failed");
     }
+
 
     const result = await res.json();
     state.lastResult = result;
@@ -642,13 +942,16 @@ async function runOptimizationAndShowPlan() {
     statusPill.textContent = state.lang === "ar" ? "تم حساب الخطة بنجاح" : `Plan Solved (${result.status})`;
     statusPill.className = "status-pill success";
 
-    // Switch to View 3 (Results Page)
     navigateTo("optimizer-results");
   } catch (err) {
     console.error(err);
     alert((state.lang === "ar" ? "خطأ في حساب الخطة: " : "Plan Error: ") + err.message);
+  } finally {
+    if (loadingModal) loadingModal.classList.remove("active");
   }
 }
+
+
 
 // --- Render Logic ---
 
@@ -695,15 +998,32 @@ function renderCropsTable() {
     const costVal = Number(c.production_cost) || 0;
     const waterVal = Number(c.water_requirement) || 0;
     const laborVal = Number(c.labor_requirement) || 0;
-    const laborRateVal = Number(c.labor_cost_per_hour) || 20;
+    const laborRateVal = Number(c.labor_cost_per_hour) || state.global_labor_rate || 20;
     const fertVal = Number(c.fertilizer_requirement) || 0;
-    const fertRateVal = Number(c.fertilizer_cost_per_kg) || 1.5;
+    const fertRateVal = Number(c.fertilizer_cost_per_kg) || state.global_fertilizer_rate || 1.5;
 
     const rev = yieldVal * priceVal;
     const laborCost = laborVal * laborRateVal;
     const fertCost = fertVal * fertRateVal;
     const profit = rev - costVal - laborCost - fertCost;
     const cropDisp = getCropDisplayName(c);
+
+    const formula = `(${yieldVal} × ${priceVal.toLocaleString()}) − ${costVal.toLocaleString()} − (${laborVal}h × ${laborRateVal}) − (${fertVal}kg × ${fertRateVal}) = ${profit.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+
+    const missingPrice = !c.price || c.price <= 0;
+    const missingLaborRate = (c.labor_requirement || 0) > 0 && state.global_labor_rate === 0;
+    const missingFertRate = (c.fertilizer_requirement || 0) > 0 && state.global_fertilizer_rate === 0;
+    const hasWarning = missingPrice || missingLaborRate || missingFertRate;
+
+    let profitCell;
+    if (missingPrice) {
+      profitCell = `<span style="color:#dc2626; font-size:0.85rem;">⚠️ ${state.lang === 'ar' ? 'أدخل سعر البيع' : 'Enter price'}</span>`;
+    } else if (hasWarning) {
+      const warnMsg = state.lang === 'ar' ? 'أجرة العمالة أو السماد = صفر في الخطوة 1' : 'Wage/fertilizer rate is 0 in Step 1';
+      profitCell = `<span style="font-weight:800; color:${profit >= 0 ? '#059669' : '#dc2626'}" title="${formula}">${profit.toLocaleString('en-US', { maximumFractionDigits: 0 })} ${curr} ⚠️</span><br><span style="font-size:0.75rem;color:#d97706">${warnMsg}</span>`;
+    } else {
+      profitCell = `<span style="font-weight:800; color:${profit >= 0 ? '#059669' : '#dc2626'}" title="${formula}">${profit.toLocaleString('en-US', { maximumFractionDigits: 0 })} ${curr}</span>`;
+    }
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -714,7 +1034,7 @@ function renderCropsTable() {
       <td>${waterVal.toLocaleString()}</td>
       <td>${laborVal}</td>
       <td>${fertVal}</td>
-      <td style="font-weight:800; color:${profit >= 0 ? '#059669' : '#dc2626'}">${profit.toLocaleString('en-US', {maximumFractionDigits:0})} ${curr}</td>
+      <td>${profitCell}</td>
       <td>
         <button class="btn-icon btn-icon-edit" onclick="openCropModal(${idx})" title="Edit Crop">✏️</button>
         <button class="btn-icon" onclick="deleteCrop(${idx})" title="Delete Crop">🗑️</button>
@@ -724,14 +1044,16 @@ function renderCropsTable() {
   });
 }
 
+
 function updateTotalLandBadge() {
   const total = state.fields.reduce((sum, f) => sum + f.area, 0);
   const badge = document.getElementById("total-land-badge");
   if (badge) {
-    const label = state.lang === "ar" ? `إجمالي الأرض: ${total.toFixed(1)} هكتار / فدان` : `Total Land: ${total.toFixed(1)} ha`;
+    const label = state.lang === "ar" ? `إجمالي الأرض: ${total.toFixed(1)} فدان` : `Total Land: ${total.toFixed(1)} feddans`;
     badge.textContent = label;
   }
 }
+
 
 function renderResults(res) {
   const curr = getCurrencySymbol();
@@ -746,6 +1068,7 @@ function renderResults(res) {
   const statusStr = res.is_feasible ? (state.lang === "ar" ? "خطة ممتازة ومثالية" : "Optimal Plan") : (state.lang === "ar" ? "غير قابل للحل" : "Infeasible");
   document.getElementById("kpi-status").textContent = statusStr;
 
+  renderAIExplanation(res);
   renderSeasonalFieldPlanCards(res);
   renderMainFinancialProjection(res.financial_projection);
   renderResourceMeters(res);
@@ -833,6 +1156,33 @@ function renderMainFinancialProjection(finData) {
   }
 }
 
+function renderAIExplanation(res) {
+  const container = document.getElementById("ai-explanation-content");
+  const badge = document.getElementById("ai-provider-badge");
+  if (!container) return;
+
+  const aiData = res.ai_explanation;
+  if (!aiData || !aiData.explanation_markdown) {
+    container.innerHTML = `<p style="color:var(--text-muted);">${state.lang === 'ar' ? 'غير متوفر التفسير حالياً.' : 'AI explanation unavailable.'}</p>`;
+    return;
+  }
+
+  if (badge) {
+    badge.textContent = aiData.provider || "Gemini AI";
+  }
+
+  let md = aiData.explanation_markdown;
+  let html = md
+    .replace(/^### (.*$)/gim, '<h3 style="font-size:1.1rem; font-weight:800; color:#065f46; margin:14px 0 6px;">$1</h3>')
+    .replace(/^#### (.*$)/gim, '<h4 style="font-size:1.0rem; font-weight:700; color:#047857; margin:10px 0 4px;">$1</h4>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^\* (.*$)/gim, '<li style="margin-right:16px; margin-bottom:4px;">$1</li>')
+    .replace(/^- (.*$)/gim, '<li style="margin-right:16px; margin-bottom:4px;">$1</li>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+
+  container.innerHTML = html;
+}
 // Render Seasonal Allocation Plan Cards for Farmer
 function renderSeasonalFieldPlanCards(res) {
   const container = document.getElementById("field-allocations-container");
@@ -842,7 +1192,8 @@ function renderSeasonalFieldPlanCards(res) {
   if (!res.field_allocations) return;
 
   const curr = getCurrencySymbol();
-  const haUnit = state.lang === "ar" ? "هكتار/فدان" : "ha";
+  const haUnit = state.lang === "ar" ? "فدان" : "feddan";
+
   const prevLabel = state.lang === "ar" ? "المحصول السابق" : "Previous Crop";
   const allocTitle = state.lang === "ar" ? "المحصول الموصى بزراعته" : "Recommended Crop";
   const noCropLabel = state.lang === "ar" ? "أرض بور للموسم القادم" : "Fallow Field Next Season";
@@ -863,7 +1214,7 @@ function renderSeasonalFieldPlanCards(res) {
       if (ha > 0.001) {
         allocatedSum += ha;
         const cropObj = state.crops.find(c => c.name === crop_name);
-        const profitPerHa = cropObj ? (cropObj.expected_yield * cropObj.price - cropObj.production_cost - (cropObj.labor_requirement||0)*(cropObj.labor_cost_per_hour||20) - (cropObj.fertilizer_requirement||0)*(cropObj.fertilizer_cost_per_kg||1.5)) : 0;
+        const profitPerHa = cropObj ? (cropObj.expected_yield * cropObj.price - cropObj.production_cost - (cropObj.labor_requirement||0)*state.global_labor_rate - (cropObj.fertilizer_requirement||0)*state.global_fertilizer_rate) : 0;
         const totalProfitContrib = ha * profitPerHa;
         const cropDisp = getCropDisplayName(crop_name);
 
@@ -879,13 +1230,15 @@ function renderSeasonalFieldPlanCards(res) {
     });
 
     if (!mainCropHtml) {
+      const fallowSub = state.lang === "ar" ? "تركت أرض بور لترشيد الموارد المتاحة أو لعدم ملاءمة الشروط" : "Left fallow due to budget caps or soil/rotation bounds";
       mainCropHtml = `
         <div class="field-crop-allocation-box" style="background:var(--bg-main);">
           <div class="crop-alloc-name" style="color:var(--text-dim);">😴 ${noCropLabel}</div>
-          <div style="font-size:0.85rem; color:var(--text-muted);">ترك الأرض بدون زراعة لترشيد المياه المتاحة للمزرعة</div>
+          <div style="font-size:0.85rem; color:var(--text-muted);">${fallowSub}</div>
         </div>
       `;
     }
+
 
     // Rotation & Soil Badges
     const rotationCheck = state.lang === "ar" ? "✅ تتابع ممتازة بالدورة الزراعية" : "✅ Recommended Rotation";
@@ -971,7 +1324,8 @@ function renderSuitabilityMatrix(res) {
 
   const matrix = {};
   res.suitability_details.forEach((item) => {
-    matrix[`${item.field}__${item.crop}`] = item;
+    const displayField = item.field_arabic || item.field;
+    matrix[`${displayField}__${item.crop}`] = item;
   });
 
   const headerLabel = state.lang === "ar" ? "الأرض \\ المحصول" : "Field \\ Crop";
@@ -1018,7 +1372,8 @@ function renderRotationMatrix(res) {
 
   const matrix = {};
   res.rotation_details.forEach((item) => {
-    matrix[`${item.field}__${item.crop}`] = item;
+    const displayField = item.field_arabic || item.field;
+    matrix[`${displayField}__${item.crop}`] = item;
   });
 
   const headerLabel = state.lang === "ar" ? "الأرض (المحصول السابق) \\ المحصول" : "Field (Prev Crop) \\ Crop";
@@ -1102,7 +1457,8 @@ function openFieldModal(idx = null) {
     prevCrop = f.previous_crop || "";
   } else {
     document.getElementById("field-modal-title").textContent = state.lang === "ar" ? "إضافة أرض جديدة" : "Add New Field";
-    document.getElementById("m-field-name").value = `Field_${state.fields.length + 1}`;
+    document.getElementById("m-field-name").value = state.lang === "ar" ? `قطعة أرض ${state.fields.length + 1}` : `Field_${state.fields.length + 1}`;
+
     document.getElementById("m-field-area").value = 30.0;
     document.getElementById("m-field-ph").value = 6.8;
     document.getElementById("m-field-ec").value = 1.0;
@@ -1165,13 +1521,11 @@ function openCropModal(idx = null) {
     document.getElementById("crop-modal-title").textContent = state.lang === "ar" ? "تعديل بيانات المحصول" : "Edit Crop";
     document.getElementById("m-crop-name").value = c.name;
     document.getElementById("m-crop-yield").value = c.expected_yield;
-    document.getElementById("m-crop-price").value = c.price;
-    document.getElementById("m-crop-cost").value = c.production_cost;
+    document.getElementById("m-crop-price").value = c.price || "";
+    document.getElementById("m-crop-cost").value = c.production_cost || "";
     document.getElementById("m-crop-water").value = c.water_requirement;
     document.getElementById("m-crop-labor").value = c.labor_requirement || 0;
-    document.getElementById("m-crop-labor-rate").value = c.labor_cost_per_hour || 20;
     document.getElementById("m-crop-fert").value = c.fertilizer_requirement || 0;
-    document.getElementById("m-crop-fert-rate").value = c.fertilizer_cost_per_kg || 1.5;
 
     const sr = c.soil_requirement;
     document.getElementById("m-crop-min-ph").value = sr ? sr.min_ph : 6.0;
@@ -1180,23 +1534,23 @@ function openCropModal(idx = null) {
     document.getElementById("m-crop-textures").value = sr ? sr.suitable_textures.join(", ") : "Loam, Clay, Silt";
   } else {
     document.getElementById("crop-modal-title").textContent = state.lang === "ar" ? "إضافة محصول جديد" : "Add New Crop";
-    document.getElementById("m-crop-name").value = `Crop_${state.crops.length + 1}`;
-    document.getElementById("m-crop-yield").value = 5.0;
-    document.getElementById("m-crop-price").value = 12000.0;
-    document.getElementById("m-crop-cost").value = 20000.0;
-    document.getElementById("m-crop-water").value = 4000.0;
-    document.getElementById("m-crop-labor").value = 20;
-    document.getElementById("m-crop-labor-rate").value = 20;
-    document.getElementById("m-crop-fert").value = 150;
-    document.getElementById("m-crop-fert-rate").value = 1.5;
-    document.getElementById("m-crop-min-ph").value = 6.0;
-    document.getElementById("m-crop-max-ph").value = 7.5;
-    document.getElementById("m-crop-max-ec").value = 2.0;
-    document.getElementById("m-crop-textures").value = "Loam, Clay, Silt, Sandy";
+    document.getElementById("m-crop-name").value = "";
+    document.getElementById("m-crop-yield").value = 5.0;   // placeholder — user can modify
+    document.getElementById("m-crop-price").value = "";    // user must enter
+    document.getElementById("m-crop-cost").value = "";     // user must enter
+    document.getElementById("m-crop-water").value = "";
+    document.getElementById("m-crop-labor").value = "";
+    document.getElementById("m-crop-fert").value = "";
+    document.getElementById("m-crop-min-ph").value = 4.5;
+    document.getElementById("m-crop-max-ph").value = 8.5;
+    document.getElementById("m-crop-max-ec").value = 3.5;
+    document.getElementById("m-crop-textures").value = "Loam, Clay, Silt, Sandy, Sandy Loam";
+
   }
 
   modal.classList.add("active");
 }
+
 
 function closeCropModal() {
   document.getElementById("crop-modal").classList.remove("active");
@@ -1205,14 +1559,12 @@ function closeCropModal() {
 function saveCropModal() {
   const idxStr = document.getElementById("crop-edit-idx").value;
   const name = document.getElementById("m-crop-name").value.trim();
-  const yieldVal = parseFloat(document.getElementById("m-crop-yield").value) || 0;
+  const yieldVal = parseFloat(document.getElementById("m-crop-yield").value) || 5.0;
   const price = parseFloat(document.getElementById("m-crop-price").value) || 0;
   const cost = parseFloat(document.getElementById("m-crop-cost").value) || 0;
   const water = parseFloat(document.getElementById("m-crop-water").value) || 0;
   const labor = parseFloat(document.getElementById("m-crop-labor").value) || 0;
-  const laborRate = parseFloat(document.getElementById("m-crop-labor-rate").value) || 20;
   const fert = parseFloat(document.getElementById("m-crop-fert").value) || 0;
-  const fertRate = parseFloat(document.getElementById("m-crop-fert-rate").value) || 1.5;
 
   const minPh = parseFloat(document.getElementById("m-crop-min-ph").value) || 6.0;
   const maxPh = parseFloat(document.getElementById("m-crop-max-ph").value) || 8.0;
@@ -1220,8 +1572,8 @@ function saveCropModal() {
   const texturesStr = document.getElementById("m-crop-textures").value;
   const suitableTextures = texturesStr.split(",").map(s => s.trim()).filter(Boolean);
 
-  if (!name || yieldVal <= 0 || price <= 0) {
-    alert(state.lang === "ar" ? "يرجى إدخال اسم المحصول، الإنتاجية، وسعر السوق بشكل صحيح." : "Please enter a valid crop name, yield, and market price.");
+  if (!name) {
+    alert(state.lang === "ar" ? "يرجى إدخال اسم المحصول." : "Please enter a crop name.");
     return;
   }
 
@@ -1232,9 +1584,8 @@ function saveCropModal() {
     production_cost: cost,
     water_requirement: water,
     labor_requirement: labor,
-    labor_cost_per_hour: laborRate,
     fertilizer_requirement: fert,
-    fertilizer_cost_per_kg: fertRate,
+    // labor_cost_per_hour and fertilizer_cost_per_kg are global (injected at optimization time)
     soil_requirement: {
       min_ph: minPh,
       max_ph: maxPh,
@@ -1252,6 +1603,7 @@ function saveCropModal() {
   closeCropModal();
   renderCropsTable();
 }
+
 
 function deleteCrop(idx) {
   const msg = state.lang === "ar" ? `هل أنت تأكد من حذف المحصول '${state.crops[idx].name}'؟` : `Are you sure you want to delete crop '${state.crops[idx].name}'?`;

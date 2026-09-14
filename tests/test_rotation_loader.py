@@ -30,6 +30,18 @@ def test_crop_name_normalization_and_resolution(loader):
         loader.resolve_crop_name("UnmatchedUnknownCrop")
 
 
+def test_arabic_crop_name_resolution(loader):
+    """Verify that Egyptian Arabic crop names resolve to canonical English matrix crop names."""
+    assert loader.resolve_crop_name("قمح") == "Wheat"
+    assert loader.resolve_crop_name("شعير") == "Barley"
+    assert loader.resolve_crop_name("الأرز") == "Rice"
+    assert loader.resolve_crop_name("القطن") == "Cotton"
+    assert loader.resolve_crop_name("فول صويا") == "Soybean"
+    assert loader.resolve_crop_name("الطماطم") == "Tomato"
+    assert loader.resolve_crop_name("بصل كامل النضج") == "Fully Mature (Dry) Onion"
+
+
+
 def test_row_column_symmetry_check(tmp_path):
     """Verify that a matrix with asymmetrical row and column crop sets raises ValueError at load time."""
     excel_file = tmp_path / "asymmetric_matrix.xlsx"

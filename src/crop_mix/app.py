@@ -36,10 +36,15 @@ from crop_mix.data.crop_seasons import (
 )
 from crop_mix.business.financial_projection import FinancialProjection
 from crop_mix.business.multi_season_planner import MultiSeasonPlanner, SeasonPlan
+from crop_mix.services.llm_explainer import CropMixLLMExplainer
+from crop_mix.data.risk_scenarios import get_default_provider
+from crop_mix.models.risk_aware_optimizer import RiskAwareOptimizer, MODES as RISK_MODES
 
 ecocrop_db = EcoCropDatabase()
 rotation_loader = RotationMatrixLoader()
 water_loader = EgyptWaterDataLoader()
+llm_explainer = CropMixLLMExplainer()
+
 
 # Multi-season active session cache
 active_multi_season_sessions: Dict[str, MultiSeasonPlanner] = {}
@@ -72,20 +77,22 @@ class SoilRequirementSchema(BaseModel):
 
 class CropSchema(BaseModel):
     name: str
-    expected_yield: float = Field(..., gt=0, description="Yield in metric tons/ha")
+    name_ar: Optional[str] = Field(None, description="Arabic crop name")
+    expected_yield: float = Field(..., gt=0, description="Yield in metric tons/feddan")
     price: float = Field(..., ge=0, description="Price in EGP/ton")
-    production_cost: float = Field(..., ge=0, description="Base production cost EGP/ha")
-    water_requirement: float = Field(..., ge=0, description="Water requirement m^3/ha")
-    labor_requirement: float = Field(0.0, ge=0, description="Labor hours/ha")
+    production_cost: float = Field(..., ge=0, description="Base production cost EGP/feddan")
+    water_requirement: float = Field(..., ge=0, description="Water requirement m^3/feddan")
+    labor_requirement: float = Field(0.0, ge=0, description="Labor hours/feddan")
     labor_cost_per_hour: float = Field(20.0, ge=0, description="Labor cost EGP/hour")
-    fertilizer_requirement: float = Field(0.0, ge=0, description="Fertilizer kg/ha")
+    fertilizer_requirement: float = Field(0.0, ge=0, description="Fertilizer kg/feddan")
     fertilizer_cost_per_kg: float = Field(1.5, ge=0, description="Fertilizer cost EGP/kg")
     soil_requirement: Optional[SoilRequirementSchema] = None
 
 
 class FieldSchema(BaseModel):
     name: str
-    area: float = Field(..., gt=0, description="Field area in hectares")
+    name_ar: Optional[str] = Field(None, description="Arabic field name")
+    area: float = Field(..., gt=0, description="Field area in feddans")
     ph: float = Field(6.5, ge=0, le=14, description="Soil pH measurement")
     ec: float = Field(1.0, ge=0, description="Soil EC salinity (dS/m)")
     texture: str = Field("Loam", description="Soil texture class")
@@ -93,10 +100,13 @@ class FieldSchema(BaseModel):
     previous_crop: Optional[str] = Field(None, description="Previous crop planted in field (V4)")
 
 
+
 class OptimizationRequestSchema(BaseModel):
     version: str = Field("v4", description="Optimizer version: 'v1', 'v2', 'v3', or 'v4'")
     zone: str = Field("Delta", description="Egyptian region: Delta, Middle Egypt, Upper Egypt, Sinai / Reclaimed Lands")
     season: str = Field("Winter", description="Agricultural season: Winter, Summer, Nili, Perennial")
+    lang: str = Field("ar", description="Language: 'ar' or 'en'")
+    unit: str = Field("feddan", description="Land area unit: 'feddan' or 'ha'")
     water_budget: float = Field(..., ge=0, description="Available water budget in m^3")
     labor_budget: float = Field(2500.0, ge=0, description="Available labor budget in hours")
     fertilizer_budget: float = Field(15000.0, ge=0, description="Available fertilizer budget in kg")
@@ -124,6 +134,17 @@ class NextSeasonRequest(BaseModel):
     candidate_crops: Optional[List[str]] = Field(None, description="Optional explicit candidate crops update")
 
 
+class RiskAnalysisRequest(BaseModel):
+    """Request body for CVaR-based risk analysis using the V4 farm schema."""
+    zone: str = Field("Delta", description="Egyptian region")
+    season: str = Field("Winter", description="Agricultural season")
+    water_budget: float = Field(..., ge=0, description="Water budget m^3")
+    labor_budget: float = Field(2500.0, ge=0, description="Labor budget hours")
+    fertilizer_budget: float = Field(15000.0, ge=0, description="Fertilizer budget kg")
+    crops: List[CropSchema]
+    fields: List[FieldSchema]
+
+
 # --- Helper Functions ---
 
 def build_farm_inputs(req: OptimizationRequestSchema) -> FarmInputs:
@@ -144,9 +165,11 @@ def build_farm_inputs(req: OptimizationRequestSchema) -> FarmInputs:
             water_req = water_loader.get_water_requirement(c.name, zone=req.zone, season=req.season)
 
         canonical_name = get_canonical_crop_name(c.name)
+        name_ar = c.name_ar or rotation_loader.arabic_map.get(canonical_name) or get_arabic_crop_name(canonical_name) or canonical_name
 
         crops_dict[canonical_name] = CropParameters(
             name=canonical_name,
+            name_ar=name_ar,
             expected_yield=c.expected_yield,
             price=c.price,
             production_cost=c.production_cost,
@@ -163,6 +186,7 @@ def build_farm_inputs(req: OptimizationRequestSchema) -> FarmInputs:
     for f in req.fields:
         fields_dict[f.name] = FieldParameters(
             name=f.name,
+            name_ar=f.name_ar or f.name,
             area=f.area,
             ph=f.ph,
             ec=f.ec,
@@ -171,6 +195,7 @@ def build_farm_inputs(req: OptimizationRequestSchema) -> FarmInputs:
             previous_crop=get_canonical_crop_name(f.previous_crop) if f.previous_crop else None,
         )
         total_field_area += f.area
+
 
     if not fields_dict:
         total_field_area = sum(f.area for f in req.fields) if req.fields else 100.0
@@ -213,6 +238,7 @@ def compute_suitability_explanations(farm_inputs: FarmInputs) -> List[Dict[str, 
             reason_str = "Suitable" if suitable else "; ".join(reasons)
             details.append({
                 "field": f_name,
+                "field_arabic": f_obj.name_ar or f_obj.name,
                 "crop": c_name,
                 "crop_arabic": get_arabic_crop_name(c_name),
                 "suitable": suitable,
@@ -244,6 +270,7 @@ def compute_rotation_explanations(farm_inputs: FarmInputs) -> List[Dict[str, Any
 
             details.append({
                 "field": f_name,
+                "field_arabic": f_obj.name_ar or f_obj.name,
                 "crop": c_name,
                 "crop_arabic": get_arabic_crop_name(c_name),
                 "previous_crop": prev_c or "None",
@@ -417,7 +444,9 @@ def get_rotation_matrix_info():
         "crops": crops,
         "perennial_map": rotation_loader.perennial_map,
         "family_map": rotation_loader.family_map,
+        "arabic_map": rotation_loader.arabic_map,
     }
+
 
 
 @app.get("/api/water/zones")
@@ -448,8 +477,8 @@ def run_optimization(req: OptimizationRequestSchema):
         raise HTTPException(status_code=400, detail="At least one crop must be defined.")
 
     farm_inputs = build_farm_inputs(req)
-
     version = req.version.lower()
+
     if version == "v1":
         optimizer = CropMixOptimizerV1()
         res = optimizer.solve(farm_inputs)
@@ -469,7 +498,7 @@ def run_optimization(req: OptimizationRequestSchema):
             total_fert=0.0, fert_limit=None,
         )
 
-        return {
+        res_payload = {
             "version": "V1 (Aggregate Basic)",
             "status": res.status,
             "is_feasible": res.is_feasible,
@@ -517,7 +546,7 @@ def run_optimization(req: OptimizationRequestSchema):
             total_fert=res.total_fertilizer_used, fert_limit=res.fertilizer_budget_limit,
         )
 
-        return {
+        res_payload = {
             "version": "V2 (Resource Budgets)",
             "status": res.status,
             "is_feasible": res.is_feasible,
@@ -554,7 +583,6 @@ def run_optimization(req: OptimizationRequestSchema):
             )
 
         suitability_details = compute_suitability_explanations(farm_inputs)
-
         binding = identify_binding_constraints(
             total_land=res.total_land_used, land_limit=sum(f.area for f in farm_inputs.fields.values()),
             total_water=res.total_water_used, water_limit=res.water_budget_limit,
@@ -562,7 +590,7 @@ def run_optimization(req: OptimizationRequestSchema):
             total_fert=res.total_fertilizer_used, fert_limit=res.fertilizer_budget_limit,
         )
 
-        return {
+        res_payload = {
             "version": "V3 (Soil Suitability)",
             "status": res.status,
             "is_feasible": res.is_feasible,
@@ -594,7 +622,6 @@ def run_optimization(req: OptimizationRequestSchema):
         optimizer = CropMixOptimizerV4(rotation_loader=rotation_loader)
         res = optimizer.solve(farm_inputs)
 
-        # 4B Phase 1 Financial Projection calculation
         financial_engine = FinancialProjection()
         fin_res = financial_engine.calculate(farm_inputs, res)
 
@@ -606,7 +633,6 @@ def run_optimization(req: OptimizationRequestSchema):
 
         suitability_details = compute_suitability_explanations(farm_inputs)
         rotation_details = compute_rotation_explanations(farm_inputs)
-
         binding = identify_binding_constraints(
             total_land=res.total_land_used, land_limit=sum(f.area for f in farm_inputs.fields.values()),
             total_water=res.total_water_used, water_limit=res.water_budget_limit,
@@ -634,7 +660,7 @@ def run_optimization(req: OptimizationRequestSchema):
                     "profit_margin_pct": round(p.profit_margin * 100.0, 2),
                 }
 
-        return {
+        res_payload = {
             "version": "V4 (Soil Suitability + Crop Rotation)",
             "status": res.status,
             "is_feasible": res.is_feasible,
@@ -677,6 +703,146 @@ def run_optimization(req: OptimizationRequestSchema):
 
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported version '{version}'.")
+
+    res_payload["ai_explanation"] = llm_explainer.generate_explanation(res_payload, lang=req.lang)
+    return res_payload
+
+
+def _format_risk_plan(res: Any, farm_inputs: FarmInputs) -> Dict[str, Any]:
+    """Serialize a CVaR optimizer result with canonical keys and Arabic aliases."""
+    crop_allocation_summary = {
+        crop_name: sum(
+            res.crop_allocation[field_name].get(crop_name, 0.0)
+            for field_name in farm_inputs.fields
+        )
+        for crop_name in farm_inputs.crops
+    }
+    return {
+        "mode": res.mode,
+        "mode_arabic": res.mode_arabic,
+        "weight_profit": res.weight_profit,
+        "alpha": res.alpha,
+        "status": res.status,
+        "is_feasible": res.is_feasible,
+        "crop_allocation_summary": crop_allocation_summary,
+        "crop_allocation_summary_arabic": {
+            get_arabic_crop_name(crop_name): area
+            for crop_name, area in crop_allocation_summary.items()
+        },
+        "field_allocations": res.crop_allocation,
+        "field_previous_crops": res.field_previous_crops,
+        "total_land_used": res.total_land_used,
+        "total_water_used": res.total_water_used,
+        "water_budget_limit": res.water_budget_limit,
+        "total_labor_used": res.total_labor_used,
+        "labor_budget_limit": res.labor_budget_limit,
+        "total_fertilizer_used": res.total_fertilizer_used,
+        "fertilizer_budget_limit": res.fertilizer_budget_limit,
+        "total_expected_revenue": res.total_expected_revenue,
+        "total_production_cost": res.total_production_cost,
+        "total_labor_cost": res.total_labor_cost,
+        "total_fertilizer_cost": res.total_fertilizer_cost,
+        "risk_metrics": {
+            "expected_profit": res.expected_profit,
+            "var_95": res.var_95,
+            "cvar_95": res.cvar_95,
+            "std_dev": res.std_dev,
+            "min_scenario_profit": res.min_scenario_profit,
+            "max_scenario_profit": res.max_scenario_profit,
+        },
+        "scenario_profits": res.scenario_profits,
+    }
+
+
+@app.get("/api/risk/scenarios")
+def get_risk_scenarios():
+    """Return synthetic agricultural risk scenarios and their probabilities."""
+    scenarios = get_default_provider().get_scenarios()
+    return {
+        "alpha": 0.95,
+        "disclaimer": (
+            "Most scenario data is SYNTHETIC for demonstration. "
+            "Market Price Downturn parameters are calibrated from FAOSTAT "
+            "producer prices; this is not an official forecast."
+        ),
+        "total_probability": round(sum(s.probability for s in scenarios), 6),
+        "scenario_count": len(scenarios),
+        "scenarios": [
+            {
+                "scenario_id": scenario.scenario_id,
+                "name": scenario.name,
+                "name_arabic": scenario.name_arabic,
+                "description": scenario.description,
+                "description_arabic": scenario.description_arabic,
+                "probability": scenario.probability,
+                "probability_pct": round(scenario.probability * 100.0, 1),
+                "risk_category": scenario.risk_category,
+                "severity": scenario.severity,
+                "crop_profiles": {
+                    crop_name: {
+                        "yield_multiplier": profile.yield_multiplier,
+                        "price_multiplier": profile.price_multiplier,
+                        "production_cost_multiplier": profile.production_cost_multiplier,
+                        "labor_cost_multiplier": profile.labor_cost_multiplier,
+                        "fertilizer_cost_multiplier": profile.fertilizer_cost_multiplier,
+                    }
+                    for crop_name, profile in scenario.crop_profiles.items()
+                },
+            }
+            for scenario in scenarios
+        ],
+    }
+
+
+@app.post("/api/risk/analyze")
+def run_risk_analysis(req: RiskAnalysisRequest):
+    """Compare max-profit, balanced, and risk-aware CVaR plans."""
+    if not req.crops:
+        raise HTTPException(status_code=400, detail="At least one crop must be defined.")
+    if not req.fields:
+        raise HTTPException(status_code=400, detail="At least one field definition is required.")
+
+    compatible_request = OptimizationRequestSchema(
+        version="v4",
+        zone=req.zone,
+        season=req.season,
+        water_budget=req.water_budget,
+        labor_budget=req.labor_budget,
+        fertilizer_budget=req.fertilizer_budget,
+        crops=req.crops,
+        fields=req.fields,
+    )
+    farm_inputs = build_farm_inputs(compatible_request)
+    optimizer = RiskAwareOptimizer(rotation_loader=rotation_loader)
+    plans: Dict[str, Any] = {}
+
+    for mode in RISK_MODES:
+        try:
+            result = optimizer.solve(farm_inputs, mode=mode, apply_soil_suitability=True)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Risk optimizer failed for mode '{mode}': {exc}")
+        plans[mode] = _format_risk_plan(result, farm_inputs)
+
+    scenarios = get_default_provider().get_scenarios()
+    return {
+        "alpha": 0.95,
+        "disclaimer": (
+            "Most scenario data is SYNTHETIC for demonstration. "
+            "Market Price Downturn parameters are calibrated from FAOSTAT "
+            "producer prices; this is not an official forecast."
+        ),
+        "scenarios_used": [
+            {
+                "scenario_id": scenario.scenario_id,
+                "name": scenario.name,
+                "name_arabic": scenario.name_arabic,
+                "probability": scenario.probability,
+                "severity": scenario.severity,
+            }
+            for scenario in scenarios
+        ],
+        "plans": plans,
+    }
 
 
 # --- Internship 4B Phase 2: Multi-Season API Endpoints ---
@@ -787,6 +953,13 @@ def plan_next_season(req: NextSeasonRequest):
         },
         "field_financials": plan.financial_projection.field_projections,
     }
+
+
+@app.post("/api/explain")
+def get_ai_explanation(payload: Dict[str, Any]):
+    """Generate LLM-driven explanation for a given optimization result payload."""
+    lang = payload.get("lang", "ar")
+    return llm_explainer.generate_explanation(payload, lang=lang)
 
 
 from fastapi.responses import FileResponse
