@@ -10,22 +10,22 @@ The system is designed around Egyptian agricultural conditions, with an **Arabic
 
 ## Key Features
 
-* 🌱 Crop-mix optimization
-* 🚜 Multi-field farm planning
-* 💧 Water budget constraints
-* 👷 Labor budget constraints
-* 🧪 Fertilizer budget constraints
-* 🌍 Field-level soil suitability
-* 🔄 Crop rotation constraints
-* 📅 Multi-season planning
-* 💰 Profit and financial projections
-* ⚠️ Risk analysis using VaR and CVaR
-* 📊 Scenario-based risk optimization
-* 🇪🇬 Arabic-first agricultural interface
-* 📐 Feddan/hectare unit conversion
-* 🤖 LLM-generated explanations of optimization results
-* 🌐 FastAPI backend
-* 🐳 Docker/Render deployment support
+*  Crop-mix optimization
+*  Multi-field farm planning
+*  Water budget constraints
+*  Labor budget constraints
+*  Fertilizer budget constraints
+*  Field-level soil suitability
+*  Crop rotation constraints
+*  Multi-season planning
+*  Profit and financial projections
+*  Risk analysis using VaR and CVaR
+*  Scenario-based risk optimization
+*  Arabic-first agricultural interface
+*  Feddan/hectare unit conversion
+*  LLM-generated explanations of optimization results
+*  FastAPI backend
+*  Docker/Render deployment support
 
 ---
 
