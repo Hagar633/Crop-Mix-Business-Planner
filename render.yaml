@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: crop-mix-business-planner
-    env: python
-    buildCommand: pip install -e .
-    startCommand: uvicorn crop_mix.app:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.10.12

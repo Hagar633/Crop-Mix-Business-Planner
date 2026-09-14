@@ -144,6 +144,9 @@ class CropMixOptimizerV3:
         solver = self._get_solver()
         results = solver.solve(model)
 
+
+
+
         status_str = str(results.solver.status) if hasattr(results.solver, "status") else "unknown"
         term_cond = (
             str(results.solver.termination_condition)

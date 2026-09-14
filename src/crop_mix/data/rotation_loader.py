@@ -8,15 +8,25 @@ import pandas as pd
 class RotationMatrixLoader:
     """Loads, validates, and queries the crop rotation matrix dataset."""
 
-    def __init__(self, excel_path: str = "data/crop_rotation_matrix_v10_corrected.xlsx"):
-        self.excel_path = excel_path
+    def __init__(self, excel_path: Optional[str] = None):
+        from pathlib import Path
+        if excel_path is None:
+            default_path = Path(__file__).resolve().parent / "crop_rotation_matrix_v10_corrected.xlsx"
+            if default_path.exists():
+                self.excel_path = str(default_path)
+            else:
+                self.excel_path = "data/crop_rotation_matrix_v10_corrected.xlsx"
+        else:
+            self.excel_path = excel_path
+
         if not os.path.exists(self.excel_path):
             # Fallback path if running from subfolder
             alt_path = os.path.join("src", "crop_mix", "data", "crop_rotation_matrix_v10_corrected.xlsx")
             if os.path.exists(alt_path):
                 self.excel_path = alt_path
             else:
-                raise FileNotFoundError(f"Rotation matrix Excel workbook not found at '{excel_path}' or '{alt_path}'.")
+                raise FileNotFoundError(f"Rotation matrix Excel workbook not found at '{self.excel_path}' or '{alt_path}'.")
+
 
         self._load_and_validate()
 

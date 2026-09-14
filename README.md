@@ -1,13 +1,32 @@
+# Crop-Mix-Business-Planner
+
+An agricultural decision-support and crop-mix optimization system that recommends how to allocate farm land among crops while considering **profitability, water, labor, fertilizer, soil suitability, crop rotation, multi-season planning, and financial risk**.
+
+Built with **Python, Pyomo, HiGHS, FastAPI, JavaScript, and LLM-based explanations**.
+
+The system is designed around Egyptian agricultural conditions, with an **Arabic-first interface** and support for Egyptian agricultural terminology and **feddan/hectare unit conversion**.
+
 ---
-title: Crop Mix Business Planner
-emoji: 🌾
-colorFrom: green
-colorTo: green
-sdk: gradio
-sdk_version: 4.44.0
-python_version: "3.10"
-app_file: app.py
-pinned: false
+
+## Key Features
+
+*  Crop-mix optimization
+*  Multi-field farm planning
+*  Water budget constraints
+*  Labor budget constraints
+*  Fertilizer budget constraints
+*  Field-level soil suitability
+*  Crop rotation constraints
+*  Multi-season planning
+*  Profit and financial projections
+*  Risk analysis using VaR and CVaR
+*  Scenario-based risk optimization
+*  Arabic-first agricultural interface
+*  Feddan/hectare unit conversion
+*  LLM-generated explanations of optimization results
+*  FastAPI backend
+*  Docker/Render deployment support
+
 ---
 
 # Crop-Mix-Business-Planner
