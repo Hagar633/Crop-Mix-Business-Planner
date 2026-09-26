@@ -8,7 +8,7 @@ using Pyomo continuous Linear Programming (LP) and HiGHS.
 from dataclasses import dataclass
 from typing import Dict, Tuple, Optional
 import pyomo.environ as pyo
-from crop_mix.data.example_data import FarmInputs, field_aliases
+from crop_mix.data.example_data import FarmInputs, field_aliases, FieldNameRegistry
 from crop_mix.data.rotation_loader import RotationMatrixLoader
 from crop_mix.models.soil_suitability import SoilSuitabilityEngine
 
@@ -244,7 +244,7 @@ class CropMixOptimizerV4:
         return OptimizationResultV4(
             status=term_cond,
             is_feasible=is_feasible,
-            crop_allocation=crop_allocation,
+            crop_allocation=FieldNameRegistry(crop_allocation),
             field_land_used={f: round(v, 4) for f, v in field_land_used.items()},
             field_land_limits=field_areas,
             total_land_used=round(total_land, 4),

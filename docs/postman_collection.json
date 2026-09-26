@@ -1,69 +1,49 @@
 {
   "info": {
-    "_postman_id": "c1f7a8b9-4321-4d9f-889e-990011223344",
-    "name": "Crop Mix Business Planner API & Database Handoff",
-    "description": "Production Postman collection for communication between Database, Optimization Engine, and Web Client teams.",
+    "_postman_id": "c2f8b9e0-5432-4e0a-99ef-aa1122334455",
+    "name": "Crop Mix Business Planner API v2.0",
+    "description": "Complete Postman collection for all API endpoints: Farm Management, Crop Registry (Option 1), Water Lookup, Optimization Engine (V1-V4), Multi-Season Planning, CVaR Risk Analysis, and AI Explanation.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://127.0.0.1:8000",
-      "type": "string"
-    },
-    {
-      "key": "farmId",
-      "value": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
-      "type": "string"
-    },
-    {
-      "key": "planId",
-      "value": "e4a2f1b0-8c2d-4190-a59f-67f890123456",
-      "type": "string"
-    }
+    { "key": "baseUrl",   "value": "http://127.0.0.1:8000", "type": "string" },
+    { "key": "farmId",    "value": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d", "type": "string" },
+    { "key": "planId",    "value": "e4a2f1b0-8c2d-4190-a59f-67f890123456", "type": "string" },
+    { "key": "sessionId", "value": "season_session_001", "type": "string" }
   ],
   "item": [
+
     {
       "name": "1. Farm Management & Budgets",
       "item": [
         {
-          "name": "Create Farm & Set Budgets",
+          "name": "Create Farm",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"مزرعة النيل النموذجية\",\n  \"owner_name\": \"م. يوسف عثمان\",\n  \"zone\": \"Delta\",\n  \"total_area_feddans\": 160.0,\n  \"water_budget_m3\": 500000.0,\n  \"labor_budget_hours\": 3000.0,\n  \"fertilizer_budget_kg\": 20000.0,\n  \"labor_rate_egp_per_hour\": 20.0,\n  \"fertilizer_rate_egp_per_kg\": 1.5\n}"
+              "raw": "{\n  \"name\": \"مزرعة النيل النموذجية\",\n  \"owner_name\": \"م. يوسف عثمان\",\n  \"zone\": \"Delta\",\n  \"total_area_feddans\": 240.0,\n  \"water_budget_m3\": 500000.0,\n  \"labor_budget_hours\": 3000.0,\n  \"fertilizer_budget_kg\": 20000.0,\n  \"labor_rate_egp_per_hour\": 20.0,\n  \"fertilizer_rate_egp_per_kg\": 1.5\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/farms",
               "host": ["{{baseUrl}}"],
               "path": ["api", "farms"]
             },
-            "description": "Stores farm entity and resource budgets into the `farms` table."
+            "description": "Creates a farm record. Maps to `farms` table (Module 2)."
           },
           "response": [
             {
               "name": "201 Created",
               "status": "Created",
               "code": 201,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"id\": \"9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d\",\n  \"name\": \"مزرعة النيل النموذجية\",\n  \"zone\": \"Delta\",\n  \"total_area_feddans\": 160.0,\n  \"water_budget_m3\": 500000.0,\n  \"labor_budget_hours\": 3000.0,\n  \"fertilizer_budget_kg\": 20000.0,\n  \"created_at\": \"2026-09-02T19:00:00Z\"\n}"
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": \"9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d\",\n  \"name\": \"مزرعة النيل النموذجية\",\n  \"zone\": \"Delta\",\n  \"total_area_feddans\": 240.0,\n  \"water_budget_m3\": 500000.0,\n  \"created_at\": \"2026-09-25T19:00:00Z\"\n}"
             }
           ]
         },
         {
-          "name": "Get Farm Details & Fields",
+          "name": "Get Farm Details",
           "request": {
             "method": "GET",
             "header": [],
@@ -72,11 +52,12 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "farms", "{{farmId}}"]
             },
-            "description": "Retrieves farm budgets and associated field parcels."
+            "description": "Retrieves farm budgets and associated fields."
           }
         }
       ]
     },
+
     {
       "name": "2. Fields & Soil Measurements",
       "item": [
@@ -84,22 +65,17 @@
           "name": "Add Field Parcel",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"farm_id\": \"{{farmId}}\",\n  \"name_en\": \"North Basin\",\n  \"name_ar\": \"حوض الشمالي\",\n  \"area_feddans\": 100.0,\n  \"soil_ph\": 6.8,\n  \"soil_ec_ds_m\": 1.2,\n  \"soil_texture\": \"Loam\",\n  \"organic_matter_pct\": 2.5,\n  \"previous_crop_name\": \"Wheat\"\n}"
+              "raw": "{\n  \"farm_id\": \"{{farmId}}\",\n  \"name_en\": \"حوض الشمالي\",\n  \"name_ar\": \"حوض الشمالي\",\n  \"area_feddans\": 100.0,\n  \"soil_ph\": 6.8,\n  \"soil_ec_ds_m\": 1.2,\n  \"soil_texture\": \"Loam\",\n  \"organic_matter_pct\": 2.5,\n  \"previous_crop_name\": \"Wheat\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/farms/{{farmId}}/fields",
               "host": ["{{baseUrl}}"],
               "path": ["api", "farms", "{{farmId}}", "fields"]
             },
-            "description": "Adds a field parcel with soil parameters and previous crop rotation history."
+            "description": "Adds a field parcel. `previous_crop_name` is resolved via crop_aliases to a canonical crop_id."
           }
         },
         {
@@ -116,11 +92,12 @@
         }
       ]
     },
+
     {
-      "name": "3. Crop Catalog & EcoCrop Rules",
+      "name": "3. Crop Registry (Option 1 – Master Catalog)",
       "item": [
         {
-          "name": "Get All Available Crops",
+          "name": "List All EcoCrop Species (Curated DB)",
           "request": {
             "method": "GET",
             "header": [],
@@ -129,11 +106,47 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "ecocrop", "crops"]
             },
-            "description": "Fetches standard crops with EcoCrop soil tolerance bounds."
+            "description": "Returns curated EcoCrop entries with soil pH, EC, texture tolerances and climate parameters."
           }
         },
         {
-          "name": "Get Crop Rotation Matrix",
+          "name": "Search EcoCrop by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ecocrop/crops?category=Cereal",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ecocrop", "crops"],
+              "query": [{ "key": "category", "value": "Cereal" }]
+            },
+            "description": "Filters crop catalog by category: Cereal, Legume, Vegetable, Fruit, Fiber, Oilseed, Forage, Sugar, Medicinal/Aromatic."
+          }
+        },
+        {
+          "name": "Lookup EcoCrop Species by Name",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ecocrop/lookup/Wheat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ecocrop", "lookup", "Wheat"]
+            },
+            "description": "Fetches detailed EcoCrop entry: pH range, EC tolerance, soil textures, temperature range, crop cycle."
+          },
+          "response": [
+            {
+              "name": "200 OK – Wheat EcoCrop Entry",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"name\": \"Wheat\",\n  \"name_arabic\": \"قمح\",\n  \"scientific_name\": \"Triticum aestivum\",\n  \"category\": [\"Cereal\"],\n  \"min_ph\": 5.5,\n  \"opt_min_ph\": 6.0,\n  \"opt_max_ph\": 7.5,\n  \"max_ph\": 8.5,\n  \"max_ec\": 2.5,\n  \"suitable_textures\": [\"Loam\", \"Clay\", \"Silt\", \"Sandy Loam\"],\n  \"water_requirement\": 3500.0,\n  \"min_temp\": 5.0,\n  \"max_temp\": 35.0,\n  \"crop_cycle_days\": 120\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Rotation Matrix Metadata",
           "request": {
             "method": "GET",
             "header": [],
@@ -142,56 +155,135 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "rotation", "matrix"]
             },
-            "description": "Returns full crop rotation matrix source of truth."
+            "description": "Returns the 53-crop list from the rotation matrix with perennial flags, crop families, and Arabic names."
           }
         }
       ]
     },
+
     {
-      "name": "4. Optimization Engine & Saved Plans",
+      "name": "4. Water Requirements Lookup",
       "item": [
         {
-          "name": "Run Crop Mix Optimizer V4",
+          "name": "Get Available Zones and Seasons",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/water/zones",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "water", "zones"]
+            },
+            "description": "Returns available Egyptian zones: Delta, Middle Egypt, Upper Egypt, Sinai / Reclaimed Lands."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"zones\": [\"Delta\", \"Middle Egypt\", \"Upper Egypt\", \"Sinai / Reclaimed Lands\"],\n  \"seasons\": [\"Winter\", \"Summer\", \"Nili\", \"Perennial\"]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Lookup Water Requirement – Wheat / Delta / Winter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/water/lookup/Wheat?zone=Delta&season=Winter",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "water", "lookup", "Wheat"],
+              "query": [
+                { "key": "zone", "value": "Delta" },
+                { "key": "season", "value": "Winter" }
+              ]
+            },
+            "description": "Returns water requirement in m³/ha via alias resolution from crop_registry. Supports any canonical or alias crop name."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"crop\": \"Wheat\",\n  \"zone\": \"Delta\",\n  \"season\": \"Winter\",\n  \"water_requirement\": 4200.0\n}"
+            }
+          ]
+        },
+        {
+          "name": "Lookup Water Requirement – Yellow Corn (Alias → Maize) / Delta / Summer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/water/lookup/Yellow Corn?zone=Delta&season=Summer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "water", "lookup", "Yellow Corn"],
+              "query": [
+                { "key": "zone", "value": "Delta" },
+                { "key": "season", "value": "Summer" }
+              ]
+            },
+            "description": "Demonstrates alias resolution: 'Yellow Corn' → water_key 'Maize' via crop_registry."
+          }
+        },
+        {
+          "name": "Lookup Water Requirement – Zaghloul Date Palm (Proxy → Dates)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/water/lookup/Zaghloul Date Palm?zone=Upper Egypt&season=Perennial",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "water", "lookup", "Zaghloul Date Palm"],
+              "query": [
+                { "key": "zone", "value": "Upper Egypt" },
+                { "key": "season", "value": "Perennial" }
+              ]
+            },
+            "description": "Demonstrates proxy resolution: 'Zaghloul Date Palm' → water_key 'Dates' from ET range (is_water_proxy=TRUE)."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "5. Optimization Engine (V1–V4)",
+      "item": [
+        {
+          "name": "V4 – Full Optimize (Soil + Rotation + Financials)",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"version\": \"v4\",\n  \"zone\": \"Delta\",\n  \"season\": \"Winter\",\n  \"lang\": \"ar\",\n  \"unit\": \"feddan\",\n  \"water_budget\": 500000.0,\n  \"labor_budget\": 3000.0,\n  \"fertilizer_budget\": 20000.0,\n  \"crops\": [\n    {\n      \"name\": \"Wheat\",\n      \"name_ar\": \"قمح\",\n      \"expected_yield\": 2.5,\n      \"price\": 12500.0,\n      \"production_cost\": 8500.0,\n      \"water_requirement\": 1890.95,\n      \"labor_requirement\": 20.0,\n      \"fertilizer_requirement\": 100.0\n    },\n    {\n      \"name\": \"Tomato\",\n      \"name_ar\": \"طماطم\",\n      \"expected_yield\": 15.0,\n      \"price\": 8000.0,\n      \"production_cost\": 19000.0,\n      \"water_requirement\": 3538.08,\n      \"labor_requirement\": 50.0,\n      \"fertilizer_requirement\": 150.0\n    },\n    {\n      \"name\": \"المانجو\",\n      \"name_ar\": \"المانجو\",\n      \"expected_yield\": 5.0,\n      \"price\": 400000.0,\n      \"production_cost\": 20000.0,\n      \"water_requirement\": 3000.0,\n      \"labor_requirement\": 30.0,\n      \"fertilizer_requirement\": 120.0,\n      \"soil_requirement\": {\n        \"min_ph\": 4.5,\n        \"max_ph\": 8.5,\n        \"max_ec\": 3.5,\n        \"suitable_textures\": [\"Loam\", \"Clay\", \"Silt\", \"Sandy\", \"Sandy Loam\"]\n      }\n    }\n  ],\n  \"fields\": [\n    {\n      \"name\": \"حوض الشمالي\",\n      \"area\": 100.0,\n      \"ph\": 6.8,\n      \"ec\": 1.2,\n      \"texture\": \"Loam\",\n      \"previous_crop\": \"Wheat\"\n    },\n    {\n      \"name\": \"حوض الشرقية\",\n      \"area\": 60.0,\n      \"ph\": 5.5,\n      \"ec\": 0.8,\n      \"texture\": \"Sandy\",\n      \"previous_crop\": \"المانجو\"\n    }\n  ]\n}"
+              "raw": "{\n  \"version\": \"v4\",\n  \"zone\": \"Delta\",\n  \"season\": \"Winter\",\n  \"lang\": \"ar\",\n  \"unit\": \"feddan\",\n  \"water_budget\": 500000.0,\n  \"labor_budget\": 3000.0,\n  \"fertilizer_budget\": 20000.0,\n  \"crops\": [\n    {\n      \"name\": \"Wheat\",\n      \"name_ar\": \"قمح\",\n      \"expected_yield\": 2.5,\n      \"price\": 12500.0,\n      \"production_cost\": 8500.0,\n      \"water_requirement\": 0,\n      \"labor_requirement\": 6.0,\n      \"fertilizer_requirement\": 65.0\n    },\n    {\n      \"name\": \"Tomato\",\n      \"name_ar\": \"الطماطم\",\n      \"expected_yield\": 15.0,\n      \"price\": 8000.0,\n      \"production_cost\": 19000.0,\n      \"water_requirement\": 0,\n      \"labor_requirement\": 50.0,\n      \"fertilizer_requirement\": 100.0\n    },\n    {\n      \"name\": \"Soybean\",\n      \"name_ar\": \"فول صويا\",\n      \"expected_yield\": 1.3,\n      \"price\": 25000.0,\n      \"production_cost\": 7500.0,\n      \"water_requirement\": 0,\n      \"labor_requirement\": 7.0,\n      \"fertilizer_requirement\": 25.0\n    },\n    {\n      \"name\": \"Yellow Corn\",\n      \"name_ar\": \"الذرة الصفراء\",\n      \"expected_yield\": 4.0,\n      \"price\": 13000.0,\n      \"production_cost\": 9500.0,\n      \"water_requirement\": 0,\n      \"labor_requirement\": 10.0,\n      \"fertilizer_requirement\": 85.0\n    },\n    {\n      \"name\": \"Cotton\",\n      \"name_ar\": \"القطن\",\n      \"expected_yield\": 1.1,\n      \"price\": 35000.0,\n      \"production_cost\": 13000.0,\n      \"water_requirement\": 0,\n      \"labor_requirement\": 12.0,\n      \"fertilizer_requirement\": 75.0\n    }\n  ],\n  \"fields\": [\n    {\n      \"name\": \"حوض الشمالي\",\n      \"area\": 100.0,\n      \"ph\": 6.8,\n      \"ec\": 1.2,\n      \"texture\": \"Loam\",\n      \"organic_matter\": 2.5,\n      \"previous_crop\": \"Wheat\"\n    },\n    {\n      \"name\": \"حوض القبلي\",\n      \"area\": 80.0,\n      \"ph\": 7.8,\n      \"ec\": 3.5,\n      \"texture\": \"Clay\",\n      \"organic_matter\": 1.8,\n      \"previous_crop\": \"Soybean\"\n    },\n    {\n      \"name\": \"حوض الشرقية\",\n      \"area\": 60.0,\n      \"ph\": 5.5,\n      \"ec\": 0.8,\n      \"texture\": \"Sandy\",\n      \"organic_matter\": 1.2,\n      \"previous_crop\": null\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/optimize",
               "host": ["{{baseUrl}}"],
               "path": ["api", "optimize"]
             },
-            "description": "Executes Pyomo + HiGHS LP V4 optimization and returns profit, allocations, and binding constraints."
+            "description": "V4: Full LP with per-field soil suitability filter, crop rotation constraints (53-crop matrix), labor/fertilizer budgets, and financial projection.\n\n**water_requirement=0** triggers auto-lookup via crop_registry → water_key → Egypt water table."
           }
         },
         {
-          "name": "Save Plan to Database",
+          "name": "V4 – Save Optimization Plan to DB",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"farm_id\": \"{{farmId}}\",\n  \"season\": \"Winter\",\n  \"optimizer_version\": \"v4\",\n  \"status\": \"optimal\",\n  \"is_feasible\": true,\n  \"total_land_used_feddans\": 160.0,\n  \"total_water_used_m3\": 500000.0,\n  \"total_labor_used_hours\": 2500.0,\n  \"total_fertilizer_used_kg\": 18000.0,\n  \"total_expected_revenue_egp\": 125000000.0,\n  \"total_production_cost_egp\": 6231500.0,\n  \"total_labor_cost_egp\": 50000.0,\n  \"total_fertilizer_cost_egp\": 27000.0,\n  \"net_profit_egp\": 118691500.0,\n  \"allocations\": [\n    {\n      \"field_name\": \"حوض الشمالي\",\n      \"crop_name\": \"Tomato\",\n      \"allocated_area_feddans\": 100.0,\n      \"profit_contribution_egp\": 9985000.0\n    },\n    {\n      \"field_name\": \"حوض الشرقية\",\n      \"crop_name\": \"المانجو\",\n      \"allocated_area_feddans\": 60.0,\n      \"profit_contribution_egp\": 118768500.0\n    }\n  ]\n}"
+              "raw": "{\n  \"farm_id\": \"{{farmId}}\",\n  \"season\": \"Winter\",\n  \"optimizer_version\": \"v4\",\n  \"status\": \"optimal\",\n  \"is_feasible\": true,\n  \"total_land_used_feddans\": 240.0,\n  \"total_water_used_m3\": 498000.0,\n  \"total_labor_used_hours\": 2940.0,\n  \"total_fertilizer_used_kg\": 19500.0,\n  \"total_expected_revenue_egp\": 28500000.0,\n  \"total_production_cost_egp\": 15200000.0,\n  \"total_labor_cost_egp\": 58800.0,\n  \"total_fertilizer_cost_egp\": 29250.0,\n  \"net_profit_egp\": 13211950.0,\n  \"allocations\": [\n    {\n      \"field_name\": \"حوض الشمالي\",\n      \"crop_name\": \"Wheat\",\n      \"crop_id\": \"<crop-uuid>\",\n      \"allocated_area_feddans\": 100.0,\n      \"net_profit_egp\": 3800000.0\n    },\n    {\n      \"field_name\": \"حوض القبلي\",\n      \"crop_name\": \"Cotton\",\n      \"crop_id\": \"<crop-uuid>\",\n      \"allocated_area_feddans\": 80.0,\n      \"net_profit_egp\": 5150000.0\n    },\n    {\n      \"field_name\": \"حوض الشرقية\",\n      \"crop_name\": \"Tomato\",\n      \"crop_id\": \"<crop-uuid>\",\n      \"allocated_area_feddans\": 60.0,\n      \"net_profit_egp\": 4261950.0\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/plans",
               "host": ["{{baseUrl}}"],
               "path": ["api", "plans"]
             },
-            "description": "Persists optimization output into `optimization_plans` and `plan_field_allocations` tables."
+            "description": "Saves optimization result to `optimization_plans` and `plan_field_allocations` tables."
           }
         },
         {
@@ -205,8 +297,199 @@
               "path": ["api", "plans", "{{planId}}"]
             }
           }
+        },
+        {
+          "name": "V1 – Basic Aggregate Optimize",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": \"v1\",\n  \"zone\": \"Delta\",\n  \"season\": \"Winter\",\n  \"lang\": \"en\",\n  \"unit\": \"feddan\",\n  \"water_budget\": 500000.0,\n  \"crops\": [\n    { \"name\": \"Wheat\", \"expected_yield\": 2.5, \"price\": 12500.0, \"production_cost\": 8500.0, \"water_requirement\": 1890.0 },\n    { \"name\": \"Tomato\", \"expected_yield\": 15.0, \"price\": 8000.0, \"production_cost\": 19000.0, \"water_requirement\": 3538.0 }\n  ],\n  \"fields\": [\n    { \"name\": \"Field_1\", \"area\": 100.0, \"ph\": 6.8, \"ec\": 1.2, \"texture\": \"Loam\", \"organic_matter\": 2.5 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/optimize",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "optimize"]
+            },
+            "description": "V1: Simple LP, water + land constraints only. No soil suitability or rotation."
+          }
+        },
+        {
+          "name": "Get Preset Example Farm",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preset",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "preset"]
+            },
+            "description": "Returns the built-in example farm dataset with real Egyptian water requirements, soil data, and 5 crops."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "6. Multi-Season Planning",
+      "item": [
+        {
+          "name": "Start Multi-Season Session (Seed Season 1)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"{{sessionId}}\",\n  \"candidate_crops\": [\"Wheat\", \"Tomato\", \"Soybean\", \"Yellow Corn\", \"Cotton\", \"Barley\"],\n  \"current_season_name\": \"Winter\",\n  \"season_1_recommendation\": {\n    \"حوض الشمالي\": \"Wheat\",\n    \"حوض القبلي\": \"Cotton\",\n    \"حوض الشرقية\": \"Tomato\"\n  },\n  \"water_budget\": 500000.0,\n  \"labor_budget\": 3000.0,\n  \"fertilizer_budget\": 20000.0,\n  \"farm_request\": {\n    \"version\": \"v4\",\n    \"zone\": \"Delta\",\n    \"season\": \"Winter\",\n    \"lang\": \"ar\",\n    \"unit\": \"feddan\",\n    \"water_budget\": 500000.0,\n    \"labor_budget\": 3000.0,\n    \"fertilizer_budget\": 20000.0,\n    \"crops\": [\n      { \"name\": \"Wheat\", \"expected_yield\": 2.5, \"price\": 12500.0, \"production_cost\": 8500.0, \"water_requirement\": 0 },\n      { \"name\": \"Tomato\", \"expected_yield\": 15.0, \"price\": 8000.0, \"production_cost\": 19000.0, \"water_requirement\": 0 },\n      { \"name\": \"Soybean\", \"expected_yield\": 1.3, \"price\": 25000.0, \"production_cost\": 7500.0, \"water_requirement\": 0 },\n      { \"name\": \"Yellow Corn\", \"expected_yield\": 4.0, \"price\": 13000.0, \"production_cost\": 9500.0, \"water_requirement\": 0 },\n      { \"name\": \"Cotton\", \"expected_yield\": 1.1, \"price\": 35000.0, \"production_cost\": 13000.0, \"water_requirement\": 0 }\n    ],\n    \"fields\": [\n      { \"name\": \"حوض الشمالي\", \"area\": 100.0, \"ph\": 6.8, \"ec\": 1.2, \"texture\": \"Loam\", \"organic_matter\": 2.5, \"previous_crop\": \"Wheat\" },\n      { \"name\": \"حوض القبلي\", \"area\": 80.0, \"ph\": 7.8, \"ec\": 3.5, \"texture\": \"Clay\", \"organic_matter\": 1.8, \"previous_crop\": \"Soybean\" },\n      { \"name\": \"حوض الشرقية\", \"area\": 60.0, \"ph\": 5.5, \"ec\": 0.8, \"texture\": \"Sandy\", \"organic_matter\": 1.2, \"previous_crop\": null }\n    ]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/multi-season/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "multi-season", "start"]
+            },
+            "description": "Initializes a rolling multi-season session. Seeds completed Season 1 crop recommendations as previous_crop for each field.\n\nMaps to: `multi_season_sessions` + `season_plans` (season_number=1, is_current_season=TRUE)."
+          },
+          "response": [
+            {
+              "name": "200 OK – Session Started",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"session_id\": \"season_session_001\",\n  \"candidate_crops\": [\"Wheat\", \"Tomato\", \"Soybean\", \"Yellow Corn\", \"Cotton\", \"Barley\"],\n  \"candidate_crops_arabic\": [\"قمح\", \"الطماطم\", \"فول صويا\", \"الذرة الصفراء\", \"القطن\", \"شعير\"],\n  \"current_previous_crops\": { \"حوض الشمالي\": \"Wheat\", \"حوض القبلي\": \"Cotton\", \"حوض الشرقية\": \"Tomato\" },\n  \"next_season_number\": 2,\n  \"message\": \"تم بدء جلسة التخطيط متعدد المواسم بنجاح.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Plan Season 2 (Summer – Rotation Enforced, No Soil Filter)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"{{sessionId}}\",\n  \"season_name\": \"Summer\",\n  \"water_budget\": 520000.0,\n  \"labor_budget\": 3200.0,\n  \"fertilizer_budget\": 22000.0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/multi-season/next-season",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "multi-season", "next-season"]
+            },
+            "description": "Plans the next season using rolling crop rotation rules.\n\n⚠️ Soil suitability filter is DISABLED for Season 2+ (future soil conditions unknown).\nRotation constraints from the 53-crop matrix are fully enforced.\n\nMaps to: `season_plans` (season_number=2, is_current_season=FALSE) + `season_field_allocations`."
+          }
+        },
+        {
+          "name": "Plan Season 3 (Nili – Carry Forward Rotation)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"{{sessionId}}\",\n  \"season_name\": \"Nili\",\n  \"water_budget\": 480000.0,\n  \"labor_budget\": 2800.0,\n  \"fertilizer_budget\": 18000.0,\n  \"candidate_crops\": [\"Tomato\", \"Soybean\", \"Yellow Corn\", \"Cotton\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/multi-season/next-season",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "multi-season", "next-season"]
+            },
+            "description": "Optional: candidate_crops can be updated for any season. Budgets carry forward from previous seasons if not specified."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "7. CVaR Risk Analysis",
+      "item": [
+        {
+          "name": "Get Risk Scenarios Catalog",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/risk/scenarios",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "risk", "scenarios"]
+            },
+            "description": "Returns all 6 risk scenarios with probabilities, categories, and per-crop multipliers.\n\nMaps to: `risk_scenarios` + `risk_scenario_crop_profiles` tables."
+          },
+          "response": [
+            {
+              "name": "200 OK – 6 Scenarios",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"alpha\": 0.95,\n  \"scenario_count\": 6,\n  \"total_probability\": 1.0,\n  \"scenarios\": [\n    { \"scenario_id\": \"normal\",          \"name\": \"Normal Conditions\",     \"probability\": 0.45, \"severity\": \"Low\" },\n    { \"scenario_id\": \"water_stress\",    \"name\": \"Water Stress\",          \"probability\": 0.18, \"severity\": \"High\" },\n    { \"scenario_id\": \"heat_stress\",     \"name\": \"Extreme Heat Stress\",   \"probability\": 0.12, \"severity\": \"High\" },\n    { \"scenario_id\": \"market_downturn\", \"name\": \"Market Price Downturn\", \"probability\": 0.12, \"severity\": \"High\", \"is_calibrated\": true },\n    { \"scenario_id\": \"input_inflation\", \"name\": \"Input Cost Inflation\",   \"probability\": 0.08, \"severity\": \"Medium\", \"is_calibrated\": true },\n    { \"scenario_id\": \"severe_combined\", \"name\": \"Severe Combined Stress\", \"probability\": 0.05, \"severity\": \"Extreme\" }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Run CVaR Risk Analysis (3 Modes)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"zone\": \"Delta\",\n  \"season\": \"Winter\",\n  \"water_budget\": 500000.0,\n  \"labor_budget\": 3000.0,\n  \"fertilizer_budget\": 20000.0,\n  \"crops\": [\n    { \"name\": \"Wheat\", \"expected_yield\": 2.5, \"price\": 12500.0, \"production_cost\": 8500.0, \"water_requirement\": 0, \"labor_requirement\": 6.0, \"fertilizer_requirement\": 65.0 },\n    { \"name\": \"Tomato\", \"expected_yield\": 15.0, \"price\": 8000.0, \"production_cost\": 19000.0, \"water_requirement\": 0, \"labor_requirement\": 50.0, \"fertilizer_requirement\": 100.0 },\n    { \"name\": \"Soybean\", \"expected_yield\": 1.3, \"price\": 25000.0, \"production_cost\": 7500.0, \"water_requirement\": 0, \"labor_requirement\": 7.0, \"fertilizer_requirement\": 25.0 },\n    { \"name\": \"Yellow Corn\", \"expected_yield\": 4.0, \"price\": 13000.0, \"production_cost\": 9500.0, \"water_requirement\": 0, \"labor_requirement\": 10.0, \"fertilizer_requirement\": 85.0 },\n    { \"name\": \"Cotton\", \"expected_yield\": 1.1, \"price\": 35000.0, \"production_cost\": 13000.0, \"water_requirement\": 0, \"labor_requirement\": 12.0, \"fertilizer_requirement\": 75.0 }\n  ],\n  \"fields\": [\n    { \"name\": \"حوض الشمالي\", \"area\": 100.0, \"ph\": 6.8, \"ec\": 1.2, \"texture\": \"Loam\", \"organic_matter\": 2.5, \"previous_crop\": \"Wheat\" },\n    { \"name\": \"حوض القبلي\", \"area\": 80.0, \"ph\": 7.8, \"ec\": 3.5, \"texture\": \"Clay\", \"organic_matter\": 1.8, \"previous_crop\": \"Soybean\" },\n    { \"name\": \"حوض الشرقية\", \"area\": 60.0, \"ph\": 5.5, \"ec\": 0.8, \"texture\": \"Sandy\", \"organic_matter\": 1.2, \"previous_crop\": null }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/risk/analyze",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "risk", "analyze"]
+            },
+            "description": "Runs CVaR-based risk analysis comparing 3 modes across 6 stress scenarios:\n- **max_profit** – pure profit maximization (ignores downside risk)\n- **balanced** – blended profit + CVaR objective\n- **risk_averse** – maximizes worst-case scenario floor (CVaR)\n\nReturns per-mode: expected_profit, VaR_95, CVaR_95, std_dev, scenario_profits.\nMaps to: `risk_analysis_results` table."
+          },
+          "response": [
+            {
+              "name": "200 OK – 3-Mode CVaR Analysis",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"alpha\": 0.95,\n  \"plans\": {\n    \"max_profit\": {\n      \"mode\": \"max_profit\",\n      \"expected_profit\": 8200000.0,\n      \"risk_metrics\": { \"var_95\": 3100000.0, \"cvar_95\": 2400000.0, \"std_dev\": 1850000.0 }\n    },\n    \"balanced\": {\n      \"mode\": \"balanced\",\n      \"expected_profit\": 7600000.0,\n      \"risk_metrics\": { \"var_95\": 4200000.0, \"cvar_95\": 3800000.0, \"std_dev\": 1350000.0 }\n    },\n    \"risk_averse\": {\n      \"mode\": \"risk_averse\",\n      \"expected_profit\": 6900000.0,\n      \"risk_metrics\": { \"var_95\": 5100000.0, \"cvar_95\": 4900000.0, \"std_dev\": 980000.0 }\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Save Risk Analysis Result to DB",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"farm_id\": \"{{farmId}}\",\n  \"season\": \"Winter\",\n  \"analysis_mode\": \"balanced\",\n  \"alpha_cvar\": 0.95,\n  \"expected_profit_egp\": 7600000.0,\n  \"var_95_egp\": 4200000.0,\n  \"cvar_95_egp\": 3800000.0,\n  \"std_dev_egp\": 1350000.0,\n  \"min_scenario_profit_egp\": 2100000.0,\n  \"max_scenario_profit_egp\": 9800000.0,\n  \"scenario_profits\": {\n    \"normal\": 8800000.0,\n    \"water_stress\": 5500000.0,\n    \"heat_stress\": 6100000.0,\n    \"market_downturn\": 4200000.0,\n    \"input_inflation\": 6800000.0,\n    \"severe_combined\": 2100000.0\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/risk/results",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "risk", "results"]
+            },
+            "description": "Persists CVaR analysis result into `risk_analysis_results` table."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "8. AI Explanation",
+      "item": [
+        {
+          "name": "Generate AI Explanation (Arabic)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lang\": \"ar\",\n  \"version\": \"V4 (Soil Suitability + Crop Rotation)\",\n  \"status\": \"optimal\",\n  \"is_feasible\": true,\n  \"expected_profit\": 13211950.0,\n  \"total_land_used\": 240.0,\n  \"total_water_used\": 498000.0,\n  \"binding_constraints\": [\n    { \"resource\": \"Water Budget\", \"is_binding\": true, \"utilization_pct\": 99.6 },\n    { \"resource\": \"Land Area\", \"is_binding\": true, \"utilization_pct\": 100.0 }\n  ],\n  \"crop_allocation_summary\": {\n    \"Wheat\": 100.0,\n    \"Cotton\": 80.0,\n    \"Tomato\": 60.0\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/explain",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "explain"]
+            },
+            "description": "Generates an LLM narrative explanation of an optimization result in Arabic or English."
+          }
         }
       ]
     }
+
   ]
 }

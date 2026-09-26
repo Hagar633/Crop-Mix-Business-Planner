@@ -8,6 +8,7 @@ import math
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 import pandas as pd
+from crop_mix.data.crop_registry import get_crop_water_key, get_canonical_crop_name, CROP_REGISTRY
 
 
 # Standard alias map for unifying crop names across EcoCrop, Rotation Matrix, and Water Data
@@ -36,6 +37,12 @@ ALIAS_MAP: Dict[str, str] = {
     "Oilseed Sunflower": "Sunflower",
     "Eggplant / Aubergine": "Eggplant",
 }
+
+# Populate from CROP_REGISTRY for all 53 crops
+for crop_entry in CROP_REGISTRY.values():
+    ALIAS_MAP.setdefault(crop_entry.canonical_name_en, crop_entry.water_key)
+    for alias in crop_entry.aliases:
+        ALIAS_MAP.setdefault(alias, crop_entry.water_key)
 
 
 class EgyptWaterDataLoader:
